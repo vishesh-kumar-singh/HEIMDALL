@@ -1,7 +1,7 @@
 # AIMO Interpretability Challenge
 
-This guide explains how to develop and submit a robustness method. It uses the
-repository's **trained representation probe** as a complete, working example.
+This repo contains a guideline for developing and submitting a method into the [AIMO Interpretability Challenge](https://aimo-interp.github.io/). It uses the
+**representation classifier probe** as a complete, working example.
 
 ## Contents
 
@@ -350,7 +350,7 @@ This creates a solution ZIP. For the probing example, the output is
 
 ## How to submit
 
-1. Sign in to the AIMO competition on Codabench.
+1. Sign in to the AIMO Interpretability Challenge on [Codabench](https://www.codabench.org/competitions/16180/#/pages-tab).
 2. Open the active submission phase.
 3. Upload `baseline-submission-bundle.zip` or the generated
    `dist/solution-trained-probe.zip`.
