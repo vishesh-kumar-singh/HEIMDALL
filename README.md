@@ -23,7 +23,7 @@ For each model and batch of mathematical problems, your method predicts whether
 the model's behavior is robust:
 
 ```python
-are_robust(model_id: str, problems: list[Problem]) -> list[bool]
+are_robust(model_id: str, problems: list[str]) -> list[bool]
 ```
 
 The returned list must:
@@ -114,18 +114,7 @@ private problems and labels.
 
 ### Data available during evaluation
 
-For each call, the trained probe receives a `model_id` and a list of `Problem`
-objects:
-
-```python
-from dataclasses import dataclass
-
-
-@dataclass(frozen=True)
-class Problem:
-    original_problem: str
-    permutation_type: list[str]
-```
+For each call, the trained probe receives a `model_id` and a list of `str`.
 
 Your submission does not receive case IDs, reference labels, private dataset
 files, or network access.
@@ -147,20 +136,10 @@ trained-probe/
 The `solution.py` file defines only the Codabench interface:
 
 ```python
-from dataclasses import dataclass
-
 from probe_inference import predict_robustness
 
-
-@dataclass(frozen=True)
-class Problem:
-    original_problem: str
-    permutation_type: list[str]
-
-
-def are_robust(model_id: str, problems: list[Problem]) -> list[bool]:
-    problem_texts = [problem.original_problem for problem in problems]
-    return predict_robustness(model_id, problem_texts)
+def are_robust(model_id: str, problems: list[str]) -> list[bool]:
+    return predict_robustness(model_id, problems)
 ```
 
 `probe_inference.py` contains the implementation in three sections:
