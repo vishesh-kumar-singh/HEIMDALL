@@ -102,11 +102,6 @@ then refits the selected pipeline on all feature rows. The artifact includes
 the feature order, generation settings, decision threshold, selected
 hyperparameters, complete CV summary, source revision, and package versions.
 
-The source dataset's labels belong to `qwen3-8b:low`, while response features
-are intentionally generated with the distinct DeepSeek checkpoint available in
-the current Codabench runtime. This cross-model supervision is a known
-limitation and is preserved in the artifact metadata.
-
 ## Validate and package
 
 ```bash
