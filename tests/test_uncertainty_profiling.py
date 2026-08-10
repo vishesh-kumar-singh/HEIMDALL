@@ -31,6 +31,7 @@ from uncertainty_profile.artifact import (  # noqa: E402
     validate_artifact_payload,
 )
 from uncertainty_profile.config import (  # noqa: E402
+    DEEPSEEK_MODEL_ID,
     FEATURE_NAMES,
     GenerationConfidenceConfig,
 )
@@ -265,12 +266,54 @@ class ArtifactAndInferenceTests(unittest.TestCase):
     def test_unknown_model_falls_back_to_native_false(self) -> None:
         """Verify unsupported models return native false values without loading."""
 
-        with mock.patch(
-            "uncertainty_profile.inference.load_artifact", return_value=None
+        with (
+            mock.patch(
+                "uncertainty_profile.inference.load_artifact", return_value=None
+            ) as artifact_loader,
+            mock.patch(
+                "uncertainty_profile.inference.load_model_and_tokenizer"
+            ) as model_loader,
         ):
             predictions = predict_robustness("unknown/model", ["one", "two"])
         self.assertEqual(predictions, [False, False])
         self.assertTrue(all(type(value) is bool for value in predictions))
+        artifact_loader.assert_called_once_with("unknown/model")
+        model_loader.assert_not_called()
+
+    def test_competition_alias_loads_deepseek_checkpoint(self) -> None:
+        """Verify the Codabench alias resolves before artifact and model loading."""
+
+        artifact = SimpleNamespace(
+            model_id=DEEPSEEK_MODEL_ID,
+            feature_names=FEATURE_NAMES,
+            generation_config=GenerationConfidenceConfig(max_new_tokens=3),
+            estimator=FixedEstimator([0.1]),
+            decision_threshold=0.2,
+        )
+        rows = [{name: 0.0 for name in FEATURE_NAMES}]
+        with (
+            mock.patch(
+                "uncertainty_profile.inference.load_artifact",
+                return_value=artifact,
+            ) as artifact_loader,
+            mock.patch(
+                "uncertainty_profile.inference.load_model_and_tokenizer",
+                return_value=(object(), object()),
+            ) as model_loader,
+            mock.patch(
+                "uncertainty_profile.inference.extract_generation_features",
+                return_value=rows,
+            ),
+            mock.patch("uncertainty_profile.inference.release_model"),
+        ):
+            predictions = predict_robustness("qwen3-8b:low", ["one"])
+
+        self.assertEqual(predictions, [True])
+        artifact_loader.assert_called_once_with(DEEPSEEK_MODEL_ID)
+        model_loader.assert_called_once_with(
+            DEEPSEEK_MODEL_ID,
+            local_files_only=True,
+        )
 
     def test_known_model_uses_less_than_threshold_and_preserves_order(self) -> None:
         """Verify score direction, ordering, and native boolean conversion."""

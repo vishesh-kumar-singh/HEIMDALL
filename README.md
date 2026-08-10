@@ -197,10 +197,13 @@ uv run solutions/uncertainty-profiling/scripts/train_uncertainty_regressor.py \
   data/uncertainty-profiling/deepseek-ai_DeepSeek-R1-0528-Qwen3-8B_confidence_features.parquet
 ```
 
-The resulting solution is offline and self-contained: it loads only the
-`model_id` supplied by Codabench and its bundled regressor artifact. It uses
-greedy decoding with a 2,048-token prompt cap and a 4,096-token response cap.
-See `solutions/uncertainty-profiling/README.md` for the complete feature list, artifact provenance, CV search, and known cross-model supervision limitation.
+The resulting solution is offline and self-contained. During evaluation it
+resolves the Codabench alias `qwen3-8b:low` to the cached
+`deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` checkpoint, then loads the matching
+bundled regressor artifact. It uses greedy decoding with a 2,048-token prompt
+cap and a 4,096-token response cap. See
+`solutions/uncertainty-profiling/README.md` for the complete feature list,
+artifact provenance, and CV search.
 
 ## Runtime and available libraries
 

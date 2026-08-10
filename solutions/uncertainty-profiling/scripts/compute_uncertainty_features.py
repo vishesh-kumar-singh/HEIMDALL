@@ -28,6 +28,7 @@ for import_path in (ROOT / "scripts", SOLUTION_ROOT):
 from import_hf_dataset import fetch_all_rows  # noqa: E402
 from uncertainty_profile.artifact import safe_model_id  # noqa: E402
 from uncertainty_profile.config import (  # noqa: E402
+    DEEPSEEK_MODEL_ID,
     FEATURE_NAMES,
     GenerationConfidenceConfig,
 )
@@ -42,7 +43,7 @@ DEFAULT_DATASET = "aimo-interp/augmented-sample-math-agg"
 DEFAULT_REVISION = "f972ced0705096f8d7ca7fac30825900b8b7fb6a"
 DEFAULT_CONFIG = "default"
 DEFAULT_SPLIT = "validation"
-DEFAULT_FEATURE_MODEL = "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"
+DEFAULT_FEATURE_MODEL = DEEPSEEK_MODEL_ID
 REQUIRED_COLUMNS = {
     "model_id",
     "dataset_id",

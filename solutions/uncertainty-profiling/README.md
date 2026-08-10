@@ -42,17 +42,21 @@ uncertainty-profiling/
 ```
 
 `solution.py` defines the required
-`are_robust(model_id: str, problems: list[str]) -> list[bool]` entry point. If
-the directory does not contain an artifact for `model_id`, the solution returns
-`False` for every problem so the batch remains valid. Codabench supplies only
-the original problem strings; dataset-side `permutation_type` metadata is not
-provided to the regressor.
+`are_robust(model_id: str, problems: list[str]) -> list[bool]` entry point. When
+Codabench supplies `qwen3-8b:low`, the runtime resolves it to the cached
+`deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` checkpoint before artifact lookup and
+model loading. If no supported alias or matching artifact exists, the solution
+returns `False` for every problem so the batch remains valid. Codabench supplies
+only the original problem strings; dataset-side `permutation_type` metadata is
+not provided to the regressor.
 
 ## Inference
 
 The fitted artifact records and enforces the inference configuration:
 
-- model: [`deepseek-ai/DeepSeek-R1-0528-Qwen3-8B`](https://huggingface.co/deepseek-ai/DeepSeek-R1-0528-Qwen3-8B);
+- Codabench model alias: `qwen3-8b:low`;
+- Hugging Face checkpoint:
+  [`deepseek-ai/DeepSeek-R1-0528-Qwen3-8B`](https://huggingface.co/deepseek-ai/DeepSeek-R1-0528-Qwen3-8B);
 - user-only chat-template formatting;
 - greedy decoding with at most 2,048 prompt and 4,096 generated tokens;
 - batch size 8 with a static KV cache;

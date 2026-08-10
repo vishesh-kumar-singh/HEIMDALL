@@ -7,7 +7,7 @@ def are_robust(model_id: str, problems: list[str]) -> list[bool]:
     """Predict one native boolean robustness label per problem.
 
     Args:
-        model_id: Exact model identifier used for response generation.
+        model_id: Codabench model alias or exact checkpoint identifier.
         problems: Mathematical problem statements in evaluation order.
 
     Returns:

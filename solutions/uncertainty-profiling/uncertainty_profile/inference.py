@@ -9,6 +9,7 @@ import pandas as pd
 from transformers import PreTrainedModel, PreTrainedTokenizerBase
 
 from uncertainty_profile.artifact import load_artifact
+from uncertainty_profile.config import resolve_checkpoint_model_id
 from uncertainty_profile.extraction import (
     extract_generation_features,
     load_model_and_tokenizer,
@@ -20,7 +21,7 @@ def predict_robustness(model_id: str, problem_texts: Sequence[str]) -> list[bool
     """Predict robustness without training or network access.
 
     Args:
-        model_id: Exact model identifier requested by Codabench.
+        model_id: Codabench model alias or exact checkpoint identifier.
         problem_texts: Problem statements in submission order.
 
     Returns:
@@ -34,7 +35,8 @@ def predict_robustness(model_id: str, problem_texts: Sequence[str]) -> list[bool
     texts = list(problem_texts)
     if not texts:
         return []
-    artifact = load_artifact(model_id)
+    checkpoint_model_id = resolve_checkpoint_model_id(model_id)
+    artifact = load_artifact(checkpoint_model_id)
     if artifact is None:
         return [False] * len(texts)
 

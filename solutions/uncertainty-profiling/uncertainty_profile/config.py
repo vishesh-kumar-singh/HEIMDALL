@@ -8,6 +8,11 @@ from dataclasses import dataclass
 
 ConfigValue = int | float | bool | str
 
+DEEPSEEK_MODEL_ID = "deepseek-ai/DeepSeek-R1-0528-Qwen3-8B"
+COMPETITION_MODEL_ALIASES: dict[str, str] = {
+    "qwen3-8b:low": DEEPSEEK_MODEL_ID,
+}
+
 FEATURE_NAMES: tuple[str, ...] = (
     "generation_mean_logprob",
     "generation_mean_prob",
@@ -24,6 +29,20 @@ FEATURE_NAMES: tuple[str, ...] = (
     "generation_frac_high_conf_tokens",
     "generation_frac_low_conf_tokens",
 )
+
+
+def resolve_checkpoint_model_id(model_id: str) -> str:
+    """Resolve a Codabench model alias to its Hugging Face checkpoint.
+
+    Args:
+        model_id: Codabench model identifier or exact checkpoint identifier.
+
+    Returns:
+        Exact Hugging Face checkpoint identifier when an alias is known,
+        otherwise ``model_id`` unchanged.
+    """
+
+    return COMPETITION_MODEL_ALIASES.get(model_id, model_id)
 
 
 @dataclass(frozen=True)
