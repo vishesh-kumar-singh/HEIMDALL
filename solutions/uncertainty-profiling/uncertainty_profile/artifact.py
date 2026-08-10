@@ -110,7 +110,7 @@ def validate_artifact_payload(
         raise RuntimeError(
             f"{label} has unsupported schema_version {payload.get('schema_version')!r}"
         )
-    
+
     if payload.get("artifact_type") != ARTIFACT_TYPE:
         raise RuntimeError(
             f"{label} has unsupported artifact_type {payload.get('artifact_type')!r}"

@@ -180,7 +180,6 @@ class ConfidenceMetricTests(unittest.TestCase):
             0.99,
         )
 
-
     def test_online_collector_matches_posthoc_greedy_features(self) -> None:
         """Verify online collection preserves the original feature values."""
 

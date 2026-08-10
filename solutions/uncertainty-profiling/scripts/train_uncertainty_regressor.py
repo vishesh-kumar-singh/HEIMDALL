@@ -189,7 +189,7 @@ def validate_feature_data(frame: pd.DataFrame, n_splits: int) -> None:
         raise ValueError(f"{TARGET_COLUMN} must be in [0, 1]")
     if frame[GROUP_COLUMN].isna().any():
         raise ValueError(f"{GROUP_COLUMN} contains missing values")
-    
+
     conflicts = frame.groupby(GROUP_COLUMN, sort=False)[LABEL_COLUMN].nunique() > 1
 
     if conflicts.any():
