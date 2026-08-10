@@ -6,7 +6,7 @@ of `https://github.com/aimo-interp/baselines`.
 
 The implementation is split by responsibility:
 
-- `solution.py` defines `Problem` and `are_robust`.
+- `solution.py` defines `are_robust(model_id, problems: list[str])`.
 - `probe_inference.py` loads artifacts and models, extracts hidden states, and
   scores the probe ensemble.
 - `probe_artifacts/` contains the exported pretrained artifact when packaging a

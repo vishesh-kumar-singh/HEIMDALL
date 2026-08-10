@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Run a participant's are_robust function over Codabench input data."""
+"""Run ``are_robust(model_id: str, problems: list[str])`` on input data."""
 
 import argparse
 import importlib.util
+import inspect
 import json
 import sys
 from collections.abc import Iterable
-from dataclasses import fields, is_dataclass
 from pathlib import Path
 from types import ModuleType
-from typing import Any, get_args, get_origin, get_type_hints
+from typing import Any, get_type_hints
 
 PROBLEM_FIELDS = {"original_problem", "permutation_type"}
 
@@ -66,6 +66,45 @@ def load_cases(path: Path) -> list[dict[str, Any]]:
     return cases
 
 
+def validate_are_robust(function: Any) -> None:
+    """Validate the participant entry-point signature and annotations.
+
+    Args:
+        function: Object exported as ``are_robust`` by the submission.
+
+    Raises:
+        IngestionError: If the callable does not match the required contract.
+    """
+
+    expected_message = (
+        "solution.py must define "
+        "are_robust(model_id: str, problems: list[str]) -> list[bool]"
+    )
+    if not callable(function):
+        raise IngestionError(expected_message)
+    try:
+        signature = inspect.signature(function)
+        annotations = get_type_hints(function)
+    except (NameError, TypeError, ValueError) as exc:
+        raise IngestionError(expected_message) from exc
+
+    parameters = list(signature.parameters.values())
+    if (
+        len(parameters) != 2
+        or [parameter.name for parameter in parameters]
+        != ["model_id", "problems"]
+        or any(
+            parameter.kind is not inspect.Parameter.POSITIONAL_OR_KEYWORD
+            or parameter.default is not inspect.Parameter.empty
+            for parameter in parameters
+        )
+        or annotations.get("model_id") is not str
+        or annotations.get("problems") != list[str]
+        or annotations.get("return") != list[bool]
+    ):
+        raise IngestionError(expected_message)
+
+
 def load_solution(submission_dir: Path) -> ModuleType:
     solution_path = submission_dir / "solution.py"
     if not solution_path.is_file():
@@ -77,30 +116,11 @@ def load_solution(submission_dir: Path) -> ModuleType:
     sys.modules[spec.name] = module
     try:
         spec.loader.exec_module(module)
+        validate_are_robust(getattr(module, "are_robust", None))
     except Exception:
         if sys.modules.get(spec.name) is module:
             del sys.modules[spec.name]
         raise
-    if not callable(getattr(module, "are_robust", None)):
-        raise IngestionError("solution.py must define callable are_robust(model_id, problems)")
-    problem_model = getattr(module, "Problem", None)
-    is_problem_dataclass = isinstance(problem_model, type) and is_dataclass(problem_model)
-    model_fields = (
-        {field.name for field in fields(problem_model)} if is_problem_dataclass else set()
-    )
-    annotations = get_type_hints(problem_model) if is_problem_dataclass else {}
-    permutation_annotation = annotations.get("permutation_type")
-    if (
-        not is_problem_dataclass
-        or model_fields != PROBLEM_FIELDS
-        or annotations.get("original_problem") is not str
-        or get_origin(permutation_annotation) is not list
-        or get_args(permutation_annotation) != (str,)
-    ):
-        raise IngestionError(
-            "solution.py must define a Problem dataclass with fields "
-            "original_problem: str and permutation_type: list[str]"
-        )
     return module
 
 
@@ -135,7 +155,9 @@ def _run(input_dir: Path, output_dir: Path, submission_dir: Path) -> None:
         batch_predictions = [False] * len(batch)
         batch_valid = [False] * len(batch)
         try:
-            problems = [solution.Problem(**case["problem"]) for _, case in batch]
+            problems = [
+                case["problem"]["original_problem"] for _, case in batch
+            ]
             results = solution.are_robust(model_id, problems)
             if (
                 type(results) is list

@@ -1,14 +1,16 @@
 """Baseline that classifies every model/problem pair as robust."""
 
-from dataclasses import dataclass
 
+def are_robust(model_id: str, problems: list[str]) -> list[bool]:
+    """Return one true robustness label per input problem.
 
-@dataclass(frozen=True)
-class Problem:
-    original_problem: str
-    permutation_type: list[str]
+    Args:
+        model_id: Evaluated model identifier, unused by this constant baseline.
+        problems: Mathematical problem statements in evaluation order.
 
+    Returns:
+        Native ``True`` values aligned with ``problems``.
+    """
 
-def are_robust(model_id: str, problems: list[Problem]) -> list[bool]:
     del model_id
     return [True for _ in problems]

@@ -2,8 +2,8 @@
 
 This is the *only* file the evaluator calls directly. It must expose:
 
-* a ``Problem`` dataclass matching the fields the harness passes in, and
-* an ``are_robust(model_id, problems)`` function returning one bool per problem.
+* an ``are_robust(model_id, problems)`` function accepting problem strings and
+  returning one bool per problem.
 
 All heavy lifting (loading the probe artifact, running the model, scoring the
 probes) lives in :mod:`probe_inference` so this file stays a thin adapter
@@ -11,7 +11,6 @@ between the Codabench contract and the implementation.
 """
 
 from probe_inference import predict_robustness
-
 
 
 def are_robust(model_id: str, problems: list[str]) -> list[bool]:

@@ -10,6 +10,7 @@ This repo contains a guideline for developing and submitting a method into the [
 - [Quick start](#quick-start)
 - [Which data is available?](#which-data-is-available)
 - [Example method: trained representation probe](#example-method-trained-representation-probe)
+- [Example method: uncertainty profiling](#example-method-uncertainty-profiling)
 - [Runtime and available libraries](#runtime-and-available-libraries)
 - [Evaluation environment](#evaluation-environment)
 - [What to submit](#what-to-submit)
@@ -26,7 +27,8 @@ the model's behavior is robust:
 are_robust(model_id: str, problems: list[str]) -> list[bool]
 ```
 
-The returned list must:
+The ingestion program validates this exact annotated signature. The returned
+list must:
 
 - contain exactly one prediction per input problem;
 - preserve the input order;
@@ -162,6 +164,46 @@ The ensemble averages these margins and returns `True` when the mean is
 non-negative. The artifact stores weights, biases, thresholds, the selected
 layer, the Hugging Face model ID, and the system prompt. It does not contain
 precomputed hidden states.
+
+## Example method: uncertainty profiling
+
+The repository also provides `solutions/uncertainty-profiling/`. This baseline
+generates a deterministic response to each original problem and summarizes the
+generated-token distributions with 14 confidence and uncertainty statistics.
+A pretrained scikit-learn regressor maps those features to predicted absolute
+accuracy decay; the artifact's cross-validated threshold converts the score to
+the required robustness boolean.
+
+The motivation is to measure robustness through uncertainty over the model's
+generated reasoning trace: robust and spurious reasoning may produce different
+token-level uncertainty signatures. This follows the general perspective of
+[Tracing Uncertainty in Language Model "Reasoning"](https://arxiv.org/abs/2605.07776),
+while using a simpler set of 14 aggregate trace features.
+
+Training is deliberately separate from submission inference. Generate a
+resumable feature cache from the pinned public aggregate dataset:
+
+```bash
+uv run solutions/uncertainty-profiling/scripts/compute_uncertainty_features.py \
+  --cache-dir /path/to/huggingface/cache
+```
+
+Then select the regressor and threshold with grouped cross-validation, refit on
+all feature rows, and export the joblib artifact directly into the solution:
+
+```bash
+uv run solutions/uncertainty-profiling/scripts/train_uncertainty_regressor.py \
+  --feature-data-path \
+  data/uncertainty-profiling/deepseek-ai_DeepSeek-R1-0528-Qwen3-8B_confidence_features.parquet
+```
+
+The resulting solution is offline and self-contained. During evaluation it
+resolves the Codabench alias `qwen3-8b:low` to the cached
+`deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` checkpoint, then loads the matching
+bundled regressor artifact. It uses greedy decoding with a 2,048-token prompt
+cap and a 4,096-token response cap. See
+`solutions/uncertainty-profiling/README.md` for the complete feature list,
+artifact provenance, and CV search.
 
 ## Runtime and available libraries
 
