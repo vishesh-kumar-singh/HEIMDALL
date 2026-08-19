@@ -1,17 +1,14 @@
 #!/usr/bin/env python3
-"""Run ``are_robust(model_id: str, problems: list[str])`` on input data."""
+"""Run a participant's are_robust function over Codabench input data."""
 
 import argparse
 import importlib.util
-import inspect
 import json
 import sys
 from collections.abc import Iterable
 from pathlib import Path
 from types import ModuleType
-from typing import Any, get_type_hints
-
-PROBLEM_FIELDS = {"original_problem", "permutation_type"}
+from typing import Any
 
 
 class IngestionError(RuntimeError):
@@ -45,64 +42,13 @@ def load_cases(path: Path) -> list[dict[str, Any]]:
             raise IngestionError(f"{path.name}:{line_number}: duplicate id {case_id!r}")
         if not isinstance(model_id, str) or not model_id:
             raise IngestionError(f"{path.name}:{line_number}: invalid model_id")
-        if not isinstance(problem, dict) or set(problem) != PROBLEM_FIELDS:
-            raise IngestionError(
-                f"{path.name}:{line_number}: problem must contain exactly "
-                "original_problem and permutation_type"
-            )
-        if not isinstance(problem["original_problem"], str) or not problem["original_problem"]:
-            raise IngestionError(f"{path.name}:{line_number}: invalid problem.original_problem")
-        permutation_type = problem["permutation_type"]
-        if (
-            not isinstance(permutation_type, list)
-            or not permutation_type
-            or any(not isinstance(value, str) or not value for value in permutation_type)
-        ):
-            raise IngestionError(f"{path.name}:{line_number}: invalid problem.permutation_type")
+        if not isinstance(problem, str) or not problem:
+            raise IngestionError(f"{path.name}:{line_number}: invalid problem")
         seen_ids.add(case_id)
         cases.append(case)
     if not cases:
         raise IngestionError("input dataset is empty")
     return cases
-
-
-def validate_are_robust(function: Any) -> None:
-    """Validate the participant entry-point signature and annotations.
-
-    Args:
-        function: Object exported as ``are_robust`` by the submission.
-
-    Raises:
-        IngestionError: If the callable does not match the required contract.
-    """
-
-    expected_message = (
-        "solution.py must define "
-        "are_robust(model_id: str, problems: list[str]) -> list[bool]"
-    )
-    if not callable(function):
-        raise IngestionError(expected_message)
-    try:
-        signature = inspect.signature(function)
-        annotations = get_type_hints(function)
-    except (NameError, TypeError, ValueError) as exc:
-        raise IngestionError(expected_message) from exc
-
-    parameters = list(signature.parameters.values())
-    if (
-        len(parameters) != 2
-        or [parameter.name for parameter in parameters]
-        != ["model_id", "problems"]
-        or any(
-            parameter.kind is not inspect.Parameter.POSITIONAL_OR_KEYWORD
-            or parameter.default is not inspect.Parameter.empty
-            for parameter in parameters
-        )
-        or annotations.get("model_id") is not str
-        or annotations.get("problems") != list[str]
-        or annotations.get("return") != list[bool]
-    ):
-        raise IngestionError(expected_message)
 
 
 def load_solution(submission_dir: Path) -> ModuleType:
@@ -116,11 +62,12 @@ def load_solution(submission_dir: Path) -> ModuleType:
     sys.modules[spec.name] = module
     try:
         spec.loader.exec_module(module)
-        validate_are_robust(getattr(module, "are_robust", None))
     except Exception:
         if sys.modules.get(spec.name) is module:
             del sys.modules[spec.name]
         raise
+    if not callable(getattr(module, "are_robust", None)):
+        raise IngestionError("solution.py must define callable are_robust(model_id, problems)")
     return module
 
 
@@ -155,9 +102,7 @@ def _run(input_dir: Path, output_dir: Path, submission_dir: Path) -> None:
         batch_predictions = [False] * len(batch)
         batch_valid = [False] * len(batch)
         try:
-            problems = [
-                case["problem"]["original_problem"] for _, case in batch
-            ]
+            problems = [case["problem"] for _, case in batch]
             results = solution.are_robust(model_id, problems)
             if (
                 type(results) is list
