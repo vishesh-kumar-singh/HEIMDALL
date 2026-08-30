@@ -41,8 +41,10 @@ robust on each problem. You may use or extend any available Hugging Face
 functionality and combine signals from the forward pass to produce the
 robustness predictions.
 
-Model weights are available through the evaluation worker's offline Hugging
-Face cache. You do not have access to other models.
+Model weights for every evaluated `model_id` are available through the
+evaluation worker's offline Hugging Face cache; see
+[Evaluation environment](#evaluation-environment) for the list. As the evaluation runs offline, you will not have
+access to other HF models.
 
 ## Prerequisites
 
@@ -243,8 +245,11 @@ Important consequences:
 Each submission is evaluated on a dedicated GPU worker with the following
 resources:
 
-- **GPU:** one NVIDIA RTX PRO 6000 (Blackwell, compute capability 12.0) with
-  96 GB of VRAM.
+- **GPU:** eight NVIDIA RTX PRO 6000 (Blackwell, compute capability 12.0) with
+  96 GB of VRAM each. All eight are visible to the container, so
+  `device_map="auto"` can shard a model that does not fit on a single card.
+  The submissions share the compute environment, so the free VRAM at any moment may be less than the
+  nominal total.
 - **CPU and RAM:** 192 cores with ample system memory; there is no per-container
   memory cap.
 - **Time limit:** 3600 seconds per evaluation run, applied separately to the
@@ -259,7 +264,22 @@ resources:
 
 Models currently available in the cache:
 
+- `openai/gpt-oss-120b`
+- `allenai/Olmo-3-7B-Instruct`
 - `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B`
+- `google/gemma-3-27b-it`
+
+Every `model_id` the harness passes to `are_robust` is cached, so a method can
+always load the model it is asked to judge. All four should load onto the GPUs with
+`device_map="auto"` and `local_files_only=True`. 
+If you encounter an OOM error, it may be a clash with another process on our Codabench server 
+-- please try resubmitting and if the problem persists, please let us know.
+
+`openai/gpt-oss-120b` is cached as plain bfloat16 rather than in its upstream
+MXFP4 form, because MXFP4 weights cannot be materialized on these Blackwell
+cards. This is transparent to submissions:
+`from_pretrained("openai/gpt-oss-120b", local_files_only=True)` works as usual
+and yields a bf16 model of about 218 GiB across the eight GPUs.
 
 Models outside this list cannot be loaded during evaluation. Contact the
 organizers if your method needs another model cached on the workers.
