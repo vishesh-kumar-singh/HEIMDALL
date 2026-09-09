@@ -1,0 +1,102 @@
+nohup: ignoring input
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='yarn': {'attn_factor'}
+Loading weights:   0%|          | 0/399 [00:00<?, ?it/s]Loading weights: 100%|██████████| 399/399 [00:00<00:00, 12437.03it/s]
+[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='yarn': {'attn_factor'}
+Loading weights:   0%|          | 0/399 [00:00<?, ?it/s]Loading weights: 100%|██████████| 399/399 [00:00<00:00, 10763.55it/s]
+[GPU 0] Problem 1/5...
+[GPU 2] Problem 1/5...
+[0]  Greedy Base answer: 0
+[2]  Greedy Base answer: 0
+[0]  Base2 answer: 0 | Match: True
+[0]  Pert 1 answer: 0 | Match: True
+[0]  Pert 2 answer: 0 | Match: True
+[0]  Pert 3 answer: 0 | Match: True
+[2]  Base2 answer: 2 | Match: False
+[0]  Pert 4 answer: 0 | Match: True
+[0]  → 5/5 match → ROBUST
+[GPU 0] Problem 2/5...
+[2]  Pert 1 answer: 0 | Match: True
+[2]  Pert 2 answer: 0 | Match: True
+[2]  Pert 3 answer: 0 | Match: True
+[2]  Pert 4 answer: 0 | Match: True
+[2]  → 4/5 match → ROBUST
+[GPU 2] Problem 2/5...
+[0]  Greedy Base answer: 0
+[2]  Greedy Base answer: m+n
+[0]  Base2 answer: 0 | Match: True
+[0]  Pert 1 answer: 1 | Match: False
+[0]  Pert 2 answer: 0 | Match: True
+[0]  Pert 3 answer: 0 | Match: True
+[0]  Pert 4 answer: 2 | Match: False
+[0]  → 3/5 match → NOT ROBUST
+[GPU 0] Problem 3/5...
+[2]  Base2 answer: 1 | Match: False
+[2]  Pert 1 answer: 135 | Match: False
+[2]  Pert 2 answer: 100 | Match: False
+[2]  Pert 3 answer: 0 | Match: False
+[2]  Pert 4 answer: 1 | Match: False
+[2]  → 0/5 match → NOT ROBUST
+[GPU 2] Problem 3/5...
+[0]  Greedy Base answer: 0
+[2]  Greedy Base answer: 50
+[0]  Base2 answer: 0 | Match: True
+[0]  Pert 1 answer: 0 | Match: True
+[0]  Pert 2 answer: 0 | Match: True
+[0]  Pert 3 answer: 0 | Match: True
+[0]  Pert 4 answer: 0 | Match: True
+[0]  → 5/5 match → ROBUST
+[GPU 0] Problem 4/5...
+[2]  Base2 answer: 50 | Match: True
+[2]  Pert 1 answer: 10 | Match: False
+[2]  Pert 2 answer: 50 | Match: True
+[2]  Pert 3 answer: 50 | Match: True
+[2]  Pert 4 answer: 50 | Match: True
+[2]  → 4/5 match → ROBUST
+[GPU 2] Problem 4/5...
+[0]  Greedy Base answer: 999
+[2]  Greedy Base answer: 100
+[0]  Base2 answer: 999 | Match: True
+[0]  Pert 1 answer: 999 | Match: True
+[0]  Pert 2 answer: 999 | Match: True
+[0]  Pert 3 answer: 1001 | Match: False
+[0]  Pert 4 answer: 999 | Match: True
+[0]  → 4/5 match → ROBUST
+[GPU 0] Problem 5/5...
+[2]  Base2 answer: 100 | Match: True
+[2]  Pert 1 answer: 100 | Match: True
+[2]  Pert 2 answer: 600 | Match: False
+[2]  Pert 3 answer: 2 | Match: False
+[2]  Pert 4 answer: 99 | Match: False
+[2]  → 2/5 match → NOT ROBUST
+[GPU 2] Problem 5/5...
+[0]  Greedy Base answer: 9
+[2]  Greedy Base answer: 2023
+[0]  Base2 answer: 882 | Match: False
+[0]  Pert 1 answer: 900 | Match: False
+[0]  Pert 2 answer: 900 | Match: False
+[0]  Pert 3 answer: 99 | Match: False
+[0]  Pert 4 answer: 10 | Match: False
+[0]  → 0/5 match → NOT ROBUST
+[2]  Base2 answer: P(4048) - P(4046) | Match: False
+[2]  Pert 1 answer: 0 | Match: False
+[2]  Pert 2 answer: 4046 \times (4045)!! | Match: False
+[2]  Pert 3 answer: 4046 | Match: False
+[2]  Pert 4 answer: 4046 \times \frac{4046! | Match: False
+[2]  → 0/5 match → NOT ROBUST
+
+
+=== FINAL RESULTS ===
+  88c219: true=False, pred=True ✗
+  a1d40b: true=True, pred=False ✗
+  bbd91e: true=True, pred=True ✓
+  1fce4b: true=False, pred=True ✗
+  71beb6: true=False, pred=False ✓
+  349493: true=False, pred=True ✗
+  480182: true=False, pred=False ✓
+  1acac0: true=True, pred=True ✓
+  057f8a: true=True, pred=False ✗
+  192e23: true=False, pred=False ✓
+
+Accuracy: 5/10 = 50.0%

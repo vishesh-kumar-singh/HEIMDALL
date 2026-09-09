@@ -1,0 +1,15 @@
+{
+  "cases": 24,
+  "config": "default",
+  "dataset": "aimo-interp/val-sample",
+  "duplicate_rows_removed": 4,
+  "label_counts": {
+    "false": 15,
+    "true": 9
+  },
+  "revision": "1ae454ec1fad9727084eda8f9f3c9ae2239b21de",
+  "schema_version": 2,
+  "source": "https://huggingface.co/datasets/aimo-interp/val-sample/tree/1ae454ec1fad9727084eda8f9f3c9ae2239b21de",
+  "source_rows": 28,
+  "split": "validation"
+}
