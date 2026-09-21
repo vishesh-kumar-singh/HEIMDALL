@@ -8,3 +8,5 @@ solutions/*.zip
 *.pdf
 scratch/*
 *.zip
+predictions/*
+features/__pycache__
