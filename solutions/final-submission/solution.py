@@ -24,7 +24,15 @@ def are_robust(model_id: str, problems: list[str], reasoning_effort: list[str] =
         print(f"[Router] Dispatching Skywork to stability_pipeline", file=sys.stderr, flush=True)
         return stability_pipeline(model_id, problems)
         
+    elif "olmo" in model_id_lower:
+        print(f"[Router] Dispatching Olmo to geometry_pipeline", file=sys.stderr, flush=True)
+        return geometry_pipeline(model_id, problems)
+        
+    elif "qwen" in model_id_lower:
+        print(f"[Router] Dispatching Qwen to geometry_pipeline", file=sys.stderr, flush=True)
+        return geometry_pipeline(model_id, problems)
+        
     else:
-        # Default placeholder (we will build flips/text pipelines for Qwen/Olmo)
+        # Default placeholder
         print(f"[Router] {model_id} routed to default (True)", file=sys.stderr, flush=True)
         return [True] * len(problems)

@@ -325,8 +325,7 @@ def worker_process(gpu_id: str, model_id: str, problem_chunk: list[dict]) -> lis
                     is_robust = True
                     
             elif "olmo" in model_id.lower():
-                # Olmo False cases have a totally collapsed dimension (pca > 0.075)
-                if pca_var_ratio > 0.075:
+                if norm_div_100 < 0.05:
                     is_robust = False
                 else:
                     is_robust = True
@@ -342,6 +341,15 @@ def worker_process(gpu_id: str, model_id: str, problem_chunk: list[dict]) -> lis
                 is_robust = True # others
                 
             predictions.append(is_robust)
+            
+            # Explicit memory cleanup to prevent accumulation
+            del out
+            del batch_embeds
+            del clean_embeds
+            del inputs
+            if 'trajs' in locals(): del trajs
+            if 'clean_stack' in locals(): del clean_stack
+            torch.cuda.empty_cache()
                 
         except Exception as exc:
             import traceback

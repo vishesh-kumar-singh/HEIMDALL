@@ -20,8 +20,16 @@ import sys
 import traceback
 from typing import Any
 import json
+import pickle
 from pipelines.logit_pipeline.logit_features import get_digit_ids, extract_features_fast
 
+_rf_model = None
+def get_rf_model():
+    global _rf_model
+    if _rf_model is None:
+        with open(os.path.join(os.path.dirname(__file__), "rf_artifacts", "rf_artifact.pkl"), "rb") as f:
+            _rf_model = pickle.load(f)
+    return _rf_model
 os.environ["HF_HUB_OFFLINE"] = "1"
 os.environ["HF_DATASETS_OFFLINE"] = "1"
 
@@ -328,42 +336,14 @@ def predict_robustness(
             # Add logit features
             features.update(logit_feats)
             
-            # Hardcoded decision tree logic based on the model
-            robust = False
+            # Extract DataFrame and predict
+            import pandas as pd
+            rf = get_rf_model()
             
-            if "Olmo-3-7B" in model_id:
-                # Olmo Thresholds
-                if features.get("kl_mean", 1.0) <= 0.02:
-                    robust = True
-                else:
-                    robust = False
-                    
-            elif "DeepSeek" in model_id:
-                # DeepSeek Thresholds
-                if features.get("de_early", 0.0) <= 2.23:
-                    robust = False
-                else:
-                    if features.get("fp_early", 1.0) <= 0.00:
-                        robust = True
-                    else:
-                        robust = False
-                        
-            elif "Skywork" in model_id:
-                # Skywork Manual Hardcode (wait count heuristic had highest correlation)
-                if wait_count > 0 or recheck_count > 0:
-                    robust = True
-                else:
-                    robust = False
-                    
-            else:
-                # Qwen3.5-4B (and general fallback)
-                if features.get("dp_max", 1.0) <= 0.79:
-                    if features.get("hn_slope", 3.0) <= 2.08:
-                        robust = True
-                    else:
-                        robust = False
-                else:
-                    robust = False
+            X = pd.DataFrame([features])
+            X = X.drop(columns=["id", "gt"], errors="ignore")
+            
+            robust = bool(rf.predict(X)[0])
             
             print(f"[combined_extract] {json.dumps(features)} | PRED={robust}", file=sys.stderr, flush=True)
         except Exception as exc:
