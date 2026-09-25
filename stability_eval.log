@@ -1,77 +1,0 @@
-Loading model deepseek-ai/DeepSeek-R1-0528-Qwen3-8B...
-[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='yarn': {'attn_factor'}
-Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-[transformers] Unrecognized keys in `rope_parameters` for 'rope_type'='yarn': {'attn_factor'}
-[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
-Loading weights:   0%|          | 0/399 [00:00<?, ?it/s]Loading weights:   1%|          | 2/399 [00:00<00:52,  7.50it/s]Loading weights:   4%|▍         | 15/399 [00:00<00:07, 49.87it/s]Loading weights:   7%|▋         | 27/399 [00:00<00:05, 68.74it/s]Loading weights:  10%|▉         | 38/399 [00:00<00:04, 79.49it/s]Loading weights:  12%|█▏        | 49/399 [00:00<00:04, 82.64it/s]Loading weights:  15%|█▌        | 60/399 [00:00<00:04, 82.80it/s]Loading weights:  18%|█▊        | 70/399 [00:00<00:03, 87.09it/s]Loading weights:  20%|██        | 80/399 [00:01<00:03, 90.06it/s]Loading weights:  23%|██▎       | 90/399 [00:01<00:03, 84.21it/s]Loading weights:  25%|██▍       | 99/399 [00:01<00:03, 81.36it/s]Loading weights:  27%|██▋       | 108/399 [00:01<00:03, 78.76it/s]Loading weights:  29%|██▉       | 117/399 [00:01<00:03, 76.04it/s]Loading weights:  32%|███▏      | 127/399 [00:01<00:03, 76.62it/s]Loading weights:  35%|███▍      | 138/399 [00:01<00:03, 78.32it/s]Loading weights:  37%|███▋      | 148/399 [00:01<00:03, 83.36it/s]Loading weights:  40%|███▉      | 158/399 [00:02<00:02, 87.39it/s]Loading weights:  42%|████▏     | 167/399 [00:02<00:02, 87.18it/s]Loading weights:  44%|████▍     | 176/399 [00:02<00:02, 80.51it/s]Loading weights:  46%|████▋     | 185/399 [00:02<00:02, 77.29it/s]Loading weights:  48%|████▊     | 193/399 [00:02<00:02, 72.21it/s]Loading weights:  51%|█████     | 204/399 [00:02<00:02, 75.43it/s]Loading weights:  54%|█████▍    | 215/399 [00:02<00:02, 78.25it/s]Loading weights:  56%|█████▌    | 224/399 [00:02<00:02, 80.72it/s]Loading weights:  59%|█████▉    | 235/399 [00:02<00:01, 87.80it/s]Loading weights:  61%|██████    | 244/399 [00:03<00:01, 88.02it/s]Loading weights:  63%|██████▎   | 253/399 [00:03<00:01, 81.22it/s]Loading weights:  66%|██████▌   | 262/399 [00:03<00:01, 80.92it/s]Loading weights:  68%|██████▊   | 271/399 [00:03<00:01, 75.72it/s]Loading weights:  70%|███████   | 280/399 [00:03<00:01, 79.07it/s]Loading weights:  72%|███████▏  | 289/399 [00:03<00:01, 81.74it/s]Loading weights:  75%|███████▍  | 298/399 [00:03<00:01, 83.68it/s]Loading weights:  77%|███████▋  | 307/399 [00:03<00:01, 78.76it/s]Loading weights:  79%|███████▉  | 316/399 [00:04<00:01, 75.37it/s]Loading weights:  81%|████████  | 324/399 [00:04<00:00, 75.09it/s]Loading weights:  84%|████████▎ | 334/399 [00:04<00:00, 81.20it/s]Loading weights:  86%|████████▌ | 343/399 [00:04<00:00, 82.11it/s]Loading weights:  88%|████████▊ | 352/399 [00:04<00:00, 79.20it/s]Loading weights:  90%|█████████ | 360/399 [00:04<00:00, 73.27it/s]Loading weights:  92%|█████████▏| 368/399 [00:04<00:00, 74.46it/s]Loading weights:  95%|█████████▍| 378/399 [00:04<00:00, 79.81it/s]Loading weights:  97%|█████████▋| 387/399 [00:04<00:00, 81.29it/s]Loading weights:  99%|█████████▉| 396/399 [00:05<00:00, 80.01it/s]Loading weights: 100%|██████████| 399/399 [00:05<00:00, 78.78it/s]
-Starting evaluation...
-
---- [Case 1/10] ID: 1acac0 ---
-Perturbed Problem generated.
-[M1] Orig Ans: 50 | Pert Ans: 50 | Match: True
-[M2] Answers (inc. orig): ['50', '50', '50', '50', '50', '50']
-[M2] Unique: 1/6 | Mode Count: 6
-[RESULT] True Label: True | Pred Label: True | M1 Match: True | M2 Unique: 1 | M2 Mode: 6
-
---- [Case 2/10] ID: 1fce4b ---
-Perturbed Problem generated.
-[M1] Orig Ans: 999 | Pert Ans: 1 | Match: False
-[M2] Answers (inc. orig): ['999', '999', '999', '999', '999', '999']
-[M2] Unique: 1/6 | Mode Count: 6
-[RESULT] True Label: False | Pred Label: False | M1 Match: False | M2 Unique: 1 | M2 Mode: 6
-
---- [Case 3/10] ID: bbd91e ---
-Perturbed Problem generated.
-[M1] Orig Ans: 0 | Pert Ans: 0 | Match: True
-[M2] Answers (inc. orig): ['0', '0', '0', '0', '0', '0']
-[M2] Unique: 1/6 | Mode Count: 6
-[RESULT] True Label: True | Pred Label: True | M1 Match: True | M2 Unique: 1 | M2 Mode: 6
-
---- [Case 4/10] ID: 057f8a ---
-Perturbed Problem generated.
-[M1] Orig Ans: 100 | Pert Ans: 100 | Match: True
-[M2] Answers (inc. orig): ['119', '99', '119', '100', '99', '100']
-[M2] Unique: 3/6 | Mode Count: 2
-[RESULT] True Label: True | Pred Label: False | M1 Match: True | M2 Unique: 3 | M2 Mode: 2
-
---- [Case 5/10] ID: 349493 ---
-Perturbed Problem generated.
-[M1] Orig Ans: 2 | Pert Ans: 1 | Match: False
-[M2] Answers (inc. orig): ['0', '0', '0', '0', '0', '2']
-[M2] Unique: 2/6 | Mode Count: 5
-[RESULT] True Label: False | Pred Label: False | M1 Match: False | M2 Unique: 2 | M2 Mode: 5
-
---- [Case 6/10] ID: 480182 ---
-Perturbed Problem generated.
-[M1] Orig Ans: 0 | Pert Ans: 147 | Match: False
-[M2] Answers (inc. orig): ['0', '1', '143', '1', '1', '0']
-[M2] Unique: 3/6 | Mode Count: 3
-[RESULT] True Label: False | Pred Label: False | M1 Match: False | M2 Unique: 3 | M2 Mode: 3
-
---- [Case 7/10] ID: 192e23 ---
-Perturbed Problem generated.
-[M1] Orig Ans: 4046Ġ\timesĠ\frac{(4046)! | Pert Ans: 4046Ġ\timesĠ\frac{(4046)! | Match: True
-[M2] Answers (inc. orig): ['4046Ġ\\timesĠ\\frac{4046!', '12', '2023Ġ\\timesĠ2022Ġ\\timesĠ\\cdotsĠ\\timesĠ1', '4046Ġ\\timesĠ\\frac{(4046)!', '0', '4046Ġ\\timesĠ\\frac{(4046)!']
-[M2] Unique: 5/6 | Mode Count: 2
-[RESULT] True Label: False | Pred Label: False | M1 Match: True | M2 Unique: 5 | M2 Mode: 2
-
---- [Case 8/10] ID: 71beb6 ---
-Perturbed Problem generated.
-[M1] Orig Ans: 18 | Pert Ans: 9 | Match: False
-[M2] Answers (inc. orig): ['9', '999', '9', '9', '900', '18']
-[M2] Unique: 4/6 | Mode Count: 3
-[RESULT] True Label: False | Pred Label: False | M1 Match: False | M2 Unique: 4 | M2 Mode: 3
-
---- [Case 9/10] ID: 88c219 ---
-Perturbed Problem generated.
-[M1] Orig Ans: 0 | Pert Ans: 0 | Match: True
-[M2] Answers (inc. orig): ['0', '0', '0', '0', '0', '0']
-[M2] Unique: 1/6 | Mode Count: 6
-[RESULT] True Label: False | Pred Label: True | M1 Match: True | M2 Unique: 1 | M2 Mode: 6
-
---- [Case 10/10] ID: a1d40b ---
-Perturbed Problem generated.
-[M1] Orig Ans: 0 | Pert Ans: 0 | Match: True
-[M2] Answers (inc. orig): ['0', '0', '0', '0', '0', '0']
-[M2] Unique: 1/6 | Mode Count: 6
-[RESULT] True Label: True | Pred Label: True | M1 Match: True | M2 Unique: 1 | M2 Mode: 6
