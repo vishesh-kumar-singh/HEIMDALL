@@ -7,6 +7,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from pipelines.geometry_pipeline import evaluate_models as geometry_pipeline
 from pipelines.stability_profile.inference import predict_robustness as stability_pipeline
 from pipelines.logit_pipeline.flip_inference import predict_robustness_parallel as logit_pipeline
+from pipelines.precision_pipeline.precision_inference import predict_robustness_parallel as precision_pipeline
 
 def are_robust(model_id: str, problems: list[str], reasoning_effort: list[str] = None) -> list[bool]:
     """
@@ -29,10 +30,7 @@ def are_robust(model_id: str, problems: list[str], reasoning_effort: list[str] =
         return geometry_pipeline(model_id, problems)
         
     elif "qwen" in model_id_lower:
-        print(f"[Router] Dispatching Qwen to geometry_pipeline", file=sys.stderr, flush=True)
-        return geometry_pipeline(model_id, problems)
+        print(f"[Router] Dispatching {model_id} to precision_pipeline", file=sys.stderr, flush=True)
+        return precision_pipeline(model_id, problems)
         
-    else:
-        # Default placeholder
-        print(f"[Router] {model_id} routed to default (True)", file=sys.stderr, flush=True)
-        return [True] * len(problems)
+    raise ValueError(f"UNRECOGNIZED MODEL ID: {model_id}. Crashing as requested!")

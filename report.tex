@@ -1,0 +1,170 @@
+    \documentclass{article}
+
+% if you need to pass options to natbib, use, e.g.:
+%     \PassOptionsToPackage{numbers, compress}{natbib}
+% before loading neurips_2026
+
+% The authors should use one of these tracks.
+% Before accepting by the NeurIPS conference, select one of the options below.
+% 0. "default" for submission
+% \usepackage{neurips_2026}
+% the "default" option is equal to the "main" option, which is used for the Main Track with double-blind reviewing.
+% 1. "main" option is used for the Main Track
+%  \usepackage[main]{neurips_2026}
+% 2. "position" option is used for the Position Paper Track
+%  \usepackage[position]{neurips_2026}
+% 3. "eandd" option is used for the Evaluations & Datasets Track
+ % \usepackage[eandd]{neurips_2026}
+% 4. "creativeai" option is used for the Creative AI Track
+%  \usepackage[creativeai]{neurips_2026}
+% 5. "sglblindworkshop" option is used for the Workshop with single-blind reviewing
+ % \usepackage[sglblindworkshop]{neurips_2026}
+% 6. "dblblindworkshop" option is used for the Workshop with double-blind reviewing
+%  \usepackage[dblblindworkshop]{neurips_2026}
+% 7. "education" option is used for the Education Track
+%  \usepackage[education]{neurips_2026}
+
+
+% After being accepted, the authors should add "final" behind the track to compile a camera-ready version.
+% 1. Main Track
+ \usepackage[main, final]{neurips_2026}
+% 2. Position Paper Track
+%  \usepackage[position, final]{neurips_2026}
+% 3. Evaluations & Datasets Track
+ % \usepackage[eandd, final]{neurips_2026}
+% 4. Creative AI Track
+%  \usepackage[creativeai, final]{neurips_2026}
+% 5. Workshop with single-blind reviewing
+%  \usepackage[sglblindworkshop, final]{neurips_2026}
+% 6. Workshop with double-blind reviewing
+%  \usepackage[dblblindworkshop, final]{neurips_2026}
+% Note. For the workshop paper template, both \title{} and \workshoptitle{} are required, with the former indicating the paper title shown in the title and the latter indicating the workshop title displayed in the footnote.
+% For workshops (5., 6.), the authors should add the name of the workshop, "\workshoptitle" command is used to set the workshop title.
+% \workshoptitle{WORKSHOP TITLE}
+% 7. Education Track
+% \usepackage[education, final]{neurips_2026}
+
+% "preprint" option is used for arXiv or other preprint submissions
+ % \usepackage[preprint]{neurips_2026}
+
+% to avoid loading the natbib package, add option nonatbib:
+%    \usepackage[nonatbib]{neurips_2026}
+
+\usepackage[utf8]{inputenc} % allow utf-8 input
+\usepackage{textgreek}      % support for Greek letters like κ
+\usepackage[T1]{fontenc}    % use 8-bit T1 fonts
+\usepackage{hyperref}       % hyperlinks
+\usepackage{url}            % simple URL typesetting
+\usepackage{booktabs}       % professional-quality tables
+\usepackage{amsfonts}       % blackboard math symbols
+\usepackage{nicefrac}       % compact symbols for 1/2, etc.
+\usepackage{microtype}      % microtypography
+\usepackage{xcolor}         % colors
+
+% Note. For the workshop paper template, both \title{} and \workshoptitle{} are required, with the former indicating the paper title shown in the title and the latter indicating the workshop title displayed in the footnote. 
+\title{AIMO Interpretability Challenge Compute Proposal\\Team BCS IITK}
+
+
+% The \author macro works with any number of authors. There are two commands
+% used to separate the names and addresses of multiple authors: \And and \AND.
+%
+% Using \And between authors leaves it to LaTeX to determine where to break the
+% lines. Using \AND forces a line break at that point. So, if LaTeX puts 3 of 4
+% authors names on the first line, and the last on the second line, try using
+% \AND instead of \And before the third author name.
+
+
+\author{%
+  Vishesh Kumar Singh \\
+  Indian Institute of Technology Kanpur\\
+  \texttt{visheshk24@iitk.ac.in} \\
+  % examples of more authors
+  \And
+  Saumya Shreyashee \\
+  Indian Institute of Technology Kanpur\\
+  \texttt{username@iitk.ac.in} \\
+  \And
+  Saarthak Upadhyay \\
+  Indian Institute of Technology Kanpur\\
+  \texttt{username@iitk.ac.in} \\
+  \And
+  Ratan \\
+  Indian Institute of Technology Kanpur\\
+  \texttt{username@iitk.ac.in} \\
+  \And
+  Priyansh Paliwal \\
+  Indian Institute of Technology Kanpur\\
+  \texttt{username@iitk.ac.in} \\
+  \And
+  Kushagra Baingaha \\
+  Indian Institute of Technology Kanpur\\
+  \texttt{username@iitk.ac.in} \\
+  \And
+  Ishita Rane \\
+  Indian Institute of Technology Kanpur\\
+  \texttt{username@iitk.ac.in} \\
+  \And
+  Chaitanya \\
+  Indian Institute of Technology Kanpur\\
+  \texttt{username@iitk.ac.in} \\
+  \And
+  Archi Mundhawana \\
+  Indian Institute of Technology Kanpur\\
+  \texttt{username@iitk.ac.in} \\
+  \And
+  Animesh Mahasur \\
+  Indian Institute of Technology Kanpur\\
+  \texttt{username@iitk.ac.in} \\
+  \And
+  Abhinav Kshitij \\
+  Indian Institute of Technology Kanpur\\
+  \texttt{username@iitk.ac.in} \\
+}
+
+
+\begin{document}
+
+
+\maketitle
+
+
+\begin{abstract}
+  The abstract paragraph should be indented \nicefrac{1}{2}~inch (3~picas) on both the left- and right-hand margins. Use 10~point type, with a vertical spacing (leading) of 11~points. The word \textbf{Abstract} must be centered, bold, and in point size 12. Two line spaces precede the abstract. The abstract must be limited to one paragraph.
+\end{abstract}
+
+
+
+\section{Introduction}
+
+
+\section{Related Works}
+
+
+
+\subsection{Trajectory of Reasoning}
+\textit{Geometry of Divergence} \cite{liang2026geometry} treats multi-turn LLM reasoning as a hidden-state trajectory and shows its geometry alone can distinguish correct from incorrect reasoning before task completion. Two signals---temporal curvature ($\kappa$, directional consistency of updates) and variance slope ($\beta$, expansion vs.\ collapse of the representation)---reliably separate successful trajectories from failing ones, which show more reversals and premature convergence. This suggests internal dynamics carry a signature of robust versus spurious reasoning, independent of final-answer correctness.
+
+\textit{RankMe}~\cite{garrido2023rankme} is an unsupervised, hyperparameter-free metric based on the singular value spectrum entropy of embeddings, which measures the effective rank and usability/feature-richness of representation dimensions within each layer without requiring downstream labels.  
+
+
+Representation engineering (RepE) \citep{zou2023representation} finds a concept as a direction in a model's hidden-state space using contrastive examples, then scores new inputs by projecting their activations onto it. For AIMO, robust versus spurious cases and original versus perturbed problems provide the contrast, giving a cheap, low-parameter robustness detector.
+
+\subsection{Stability on Perturbations}
+
+Recent literature demonstrates that internal representations, including hidden states and attention patterns, provide robust signals for detecting hallucinations in large language models~\citep{sriramanan2024llmcheck}. By modeling attention maps as graph adjacency matrices, the spectral properties of their corresponding graph Laplacians ($L = D - A$) can be analyzed to extract compact structural features, such as the top-$K$ Laplacian eigenvalues. These spectral signatures have been shown to serve as highly effective indicators of reasoning stability, where significant spectral drift correlates strongly with logical inconsistencies.
+
+Building on the premise that structural consistency reflects reasoning robustness, representation similarity metrics such as \textit{Centered Kernel Alignment (CKA)}~\cite{kornblith2019similarity} have been widely adopted to evaluate model stability. Originally proposed as a generic mathematical framework to measure feature alignment across neural network layers, CKA provides a rigorous mechanism for comparing high-dimensional embeddings. In the context of reasoning trajectories, evaluating the spectral drift and CKA similarity between the internal states of an original problem and its semantics-preserving perturbations offers a quantitative measure of robustness against adversarial or out-of-distribution shifts.
+
+\section{Ideology}
+We are exploring the following primary directions for the task:
+
+\subsection{Trajectory of Reasoning}
+We are exploring the properties of the reasoning chain hidden states and how they evolve. We hypothesize that a non-robust reasoning that considers shortcuts will have a clear different geometry signature, which is also backed by the current literature. For example, studying the mean velocity and acceleration gives a very clear distinction in robust and spurious reasoning, especially for Olmo, although our experimentation showed these features are model-specific and not generalisable to other models. Therefore we are exploring more such properties where robust reasoning may behave differently from non-robust reasoning.  
+
+\subsection{Stability on Perturbations}
+Building on the insights from related literature, we hypothesize that a robust reasoning path should remain structurally stable under minor semantic perturbations, whereas a spurious or memorized reasoning path will exhibit high sensitivity to such changes. To operationalize this, we create semantics-preserving perturbations for each problem and measure the resulting structural deviation in the model's internal representations. By computing the spectral drift of the attention graph Laplacians and the Centered Kernel Alignment (CKA) between the hidden states of the original and perturbed trajectories, we aim to quantify reasoning instability. If the spectral drift is abnormally large or the CKA similarity is low, it strongly signals that the model's reasoning is fragile and likely hallucinated, independent of whether the final generated textual answer flips.
+
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+\end{document}
