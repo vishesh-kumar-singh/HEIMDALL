@@ -103,9 +103,24 @@ def worker_process(gpu_id: str, model_id: str, problem_chunk: list[dict]) -> lis
             total_batch = 1 + N
             batch_embeds = clean_embeds.expand(total_batch, -1, -1).clone()
             
-            # Inject noise on unit sphere scaled by epsilon (only on indices 1 to N)
-            noise = torch.randn_like(batch_embeds[1:])
-            noise_norm = torch.norm(noise, dim=-1, keepdim=True)
+            # --- Smart Perturbation (Null Space / Bottom PCs) ---
+            # Instead of random noise, we perturb along the lowest variance dimensions (the semantic null space)
+            # This preserves the core mathematical meaning while rigorously testing structural fragility.
+            try:
+                centered = clean_embeds[0] - clean_embeds[0].mean(dim=0, keepdim=True)
+                # SVD on prompt embeddings. Vh is [min(seq, D), D]
+                _, _, Vh = torch.linalg.svd(centered, full_matrices=False)
+                # The last N rows correspond to the lowest variance directions of the prompt
+                bottom_dirs = Vh[-N:] # shape [N, D]
+                
+                # Each of the N noisy batches gets shifted along a different null-space direction
+                noise = bottom_dirs.unsqueeze(1).expand(N, clean_embeds.shape[1], -1).clone()
+            except Exception:
+                # Fallback to reproducible seeded random noise if SVD fails to converge
+                torch.manual_seed(hash(problem) % (2**32))
+                noise = torch.randn_like(batch_embeds[1:])
+                
+            noise_norm = torch.norm(noise, dim=-1, keepdim=True) + 1e-8
             embeds_norm = torch.norm(batch_embeds[1:], dim=-1, keepdim=True)
             scaled_noise = (noise / noise_norm) * (epsilon * embeds_norm)
             batch_embeds[1:] = batch_embeds[1:] + scaled_noise
@@ -163,8 +178,9 @@ def worker_process(gpu_id: str, model_id: str, problem_chunk: list[dict]) -> lis
                 cos_sims = torch.nn.functional.cosine_similarity(V[:-1], V[1:], dim=1)
                 min_cos = cos_sims.min().item()
                 mean_cos = cos_sims.mean().item()
+                var_cos = cos_sims.var().item() if len(cos_sims) > 1 else 0.0
             else:
-                mean_acc, max_acc, min_cos, mean_cos = 0.0, 0.0, 0.0, 0.0
+                mean_acc, max_acc, min_cos, mean_cos, var_cos = 0.0, 0.0, 0.0, 0.0, 0.0
                 
             total_path_length = step_sizes.sum().item()
             overall_displacement_vec = clean_stack[-1] - clean_stack[0]
@@ -177,8 +193,10 @@ def worker_process(gpu_id: str, model_id: str, problem_chunk: list[dict]) -> lis
                 V_norm = torch.nn.functional.normalize(V, dim=1)
                 alignments = (V_norm * overall_dir.unsqueeze(0)).sum(dim=1)
                 river_align = alignments.mean().item()
+                backtracking_index = (alignments < 0).float().mean().item()
             else:
                 river_align = 0.0
+                backtracking_index = 0.0
                 
             # --- Advanced Geometric Features ---
             # 1. Trajectory Diameter
@@ -198,17 +216,20 @@ def worker_process(gpu_id: str, model_id: str, problem_chunk: list[dict]) -> lis
             else:
                 step_gini = 0.0
                 
-            # 4. Dimensionality (PCA Variance Ratio)
+            # 4. Dimensionality (PCA Variance Ratio & Participation Ratio)
             if len(clean_stack) > 2:
                 centered = clean_stack - clean_stack.mean(dim=0, keepdim=True)
                 try:
                     _, S, _ = torch.linalg.svd(centered, full_matrices=False)
                     variances = S ** 2
                     pca_var_ratio = (variances[0] / variances.sum()).item()
+                    participation_ratio = ((variances.sum() ** 2) / (variances ** 2).sum()).item()
                 except Exception:
                     pca_var_ratio = 1.0 # fallback if svd fails to converge
+                    participation_ratio = 1.0
             else:
                 pca_var_ratio = 1.0
+                participation_ratio = 1.0
                 
             # 5. Variance Slope (Expansion of Exploration Space)
             if len(clean_stack) > 2:
@@ -303,7 +324,7 @@ def worker_process(gpu_id: str, model_id: str, problem_chunk: list[dict]) -> lis
             norm_max_vel = (max_vel / mean_vel) if mean_vel > 1e-6 else 0.0
             norm_mean_acc = (mean_acc / mean_vel) if mean_vel > 1e-6 else 0.0
             
-            csv_line = f"{prob_id},{model_id},{true_robust},{norm_div_500:.4f},{norm_div_200:.4f},{norm_div_100:.4f},{norm_div_50:.4f},{norm_div_10:.4f},{pca_var_ratio:.4f},{step_gini:.4f},{norm_max_vel:.4f},{norm_mean_acc:.4f},{min_cos:.4f},{tortuosity:.4f},{river_align:.4f},{path_to_diameter:.4f},{variance_slope:.4f},{velocity_spike_ratio:.4f},{mean_cos:.4f}"
+            csv_line = f"{prob_id},{model_id},{true_robust},{norm_div_500:.4f},{norm_div_200:.4f},{norm_div_100:.4f},{norm_div_50:.4f},{norm_div_10:.4f},{pca_var_ratio:.4f},{step_gini:.4f},{norm_max_vel:.4f},{norm_mean_acc:.4f},{min_cos:.4f},{tortuosity:.4f},{river_align:.4f},{path_to_diameter:.4f},{variance_slope:.4f},{velocity_spike_ratio:.4f},{mean_cos:.4f},{participation_ratio:.4f},{backtracking_index:.4f},{var_cos:.4f}"
             
             # Cleanly append to the CSV file (live update without stderr logs)
             csv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "norm_features.csv")
