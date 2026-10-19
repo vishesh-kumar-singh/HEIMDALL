@@ -1,0 +1,7 @@
+{
+  "by_model": {},
+  "by_family": {"deepseek": "logit", "skywork": "stability", "olmo": "geometry", "qwen": "precision"},
+  "default_pipeline": "const_false",
+  "fallback": false,
+  "fallback_by_model": {}
+}
