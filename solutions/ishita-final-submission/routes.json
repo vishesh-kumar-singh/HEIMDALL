@@ -1,0 +1,28 @@
+{
+  "by_model": {
+    "Qwen/Qwen3.5-397B-A17B-FP8:low": "const_false",
+    "gemini-3.1-pro-preview:low": "const_false",
+    "gpt-5.2-2025-12-11:low": "const_true",
+    "gpt-oss-120b:low": "const_false",
+    "huikang-gpt-oss-120b-aimo3:low": "const_false",
+    "lukealonso/GLM-5.1-NVFP4:low": "const_true",
+    "qwen3-8b:low": "rf"
+  },
+  "by_family": {
+    "deepseek": "rf",
+    "skywork": "stability",
+    "olmo": "geometry",
+    "qwen": "cot_geometry"
+  },
+  "default_pipeline": "const_false",
+  "fallback": false,
+  "fallback_by_model": {
+    "Qwen/Qwen3.5-397B-A17B-FP8:low": false,
+    "gemini-3.1-pro-preview:low": false,
+    "gpt-5.2-2025-12-11:low": true,
+    "gpt-oss-120b:low": false,
+    "huikang-gpt-oss-120b-aimo3:low": false,
+    "lukealonso/GLM-5.1-NVFP4:low": true,
+    "qwen3-8b:low": true
+  }
+}
