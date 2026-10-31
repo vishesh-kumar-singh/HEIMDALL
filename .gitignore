@@ -3,13 +3,18 @@ venv
 __pycache__/
 dist/
 .idea/
+.DS_Store
 solutions/
 features/
 report.tex
 references.bib
 LIT_REVIEW.md
+Review.md
+Claude_research.md
+Geometric Research.md
+lean_approach_Qwen/
+predictions/
 *.log
 *.pdf
 scratch/*
 *.zip
-predictions/*
