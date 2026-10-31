@@ -25,11 +25,17 @@ For each model and batch of mathematical problems, your method predicts whether
 the model's behavior is robust:
 
 ```python
-are_robust(model_id: str, problems: list[str]) -> list[bool]
+are_robust(model_id: str, reasoning_effort: str, problems: list[str]) -> list[bool]
 ```
 
 Your submission must expose a callable named `are_robust` with these arguments.
 The annotations are recommended for clarity but are not required at runtime.
+The reasoning effort comes from the dataset and is `"default"`, `"low"`, or
+`"medium"`. If the field is absent, your method receives `"default"`.
+
+The legacy `are_robust(model_id, problems)` interface remains fully supported;
+existing submissions require no changes and ignore reasoning-effort metadata.
+
 The returned list must:
 
 - contain exactly one prediction per input problem;
@@ -135,7 +141,9 @@ private problems and labels.
 
 ### Data available during evaluation
 
-For each call, the trained probe receives a `model_id` and a list of `str`.
+For each call, your method receives a `model_id`, a `reasoning_effort`, and a
+list of problem strings. Problems are grouped by model and reasoning effort,
+with one call per group. Legacy submissions still receive one batch per model.
 
 Your submission does not receive case IDs, reference labels, private dataset
 files, or network access.
@@ -159,9 +167,12 @@ The `solution.py` file defines only the Codabench interface:
 ```python
 from probe_inference import predict_robustness
 
-def are_robust(model_id: str, problems: list[str]) -> list[bool]:
+def are_robust(model_id: str, reasoning_effort: str, problems: list[str]) -> list[bool]:
     return predict_robustness(model_id, problems)
 ```
+
+The example baselines accept `reasoning_effort` but do not use it in their
+predictions. Your method can use it to account for the evaluated configuration.
 
 `probe_inference.py` contains the implementation in three sections:
 
@@ -262,16 +273,19 @@ Important consequences:
 Each submission is evaluated on a dedicated GPU worker with the following
 resources:
 
-- **GPU:** eight NVIDIA RTX PRO 6000 (Blackwell, compute capability 12.0) with
-  96 GB of VRAM each. All eight are visible to the container, so
-  `device_map="auto"` can shard a model that does not fit on a single card.
-  The submissions share the compute environment, so the free VRAM at any moment may be less than the
-  nominal total.
+- **GPU:** one NVIDIA RTX PRO 6000 (Blackwell, compute capability 12.0) with
+  96 GB of VRAM. A single card is exposed to the evaluation container, so
+  `torch.cuda.device_count()` returns 1 and `device_map="auto"` places the whole
+  model on that card. Every evaluated checkpoint fits, `openai/gpt-oss-120b`
+  included. The submissions share the compute environment, so the free VRAM at
+  any moment may be less than the nominal total.
 - **CPU and RAM:** 192 cores with ample system memory; there is no per-container
   memory cap.
 - **Time limit:** 3600 seconds per evaluation run, applied separately to the
-  prediction run and the scoring run. Loading the cached 8B model costs roughly
-  a minute of that budget.
+  prediction run and the scoring run. The limit covers the *entire* prediction
+  run -- every model batch and every problem together, not one hour per problem.
+  Loading a cached 4-8B checkpoint takes about two seconds from the warm cache,
+  and `openai/gpt-oss-120b` about four.
 - **Network:** disabled inside evaluation containers. `HF_HUB_OFFLINE=1` and
   `TRANSFORMERS_OFFLINE=1` are preset.
 - **Model cache:** a read-only Hugging Face cache is mounted at
@@ -279,24 +293,36 @@ resources:
   `from_pretrained(...)` resolves cached models with no extra configuration.
   Pass `local_files_only=True` to fail fast on anything not cached.
 
-Models currently available in the cache:
+Models evaluated in the Competition phase, and cached on the workers:
 
-- `openai/gpt-oss-120b`
-- `allenai/Olmo-3-7B-Instruct`
-- `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B`
-- `google/gemma-3-27b-it`
+| `model_id` | Main Track | Small Models Track |
+| --- | :---: |:------------------:|
+| `Qwen/Qwen3.5-4B` | yes |        yes         |
+| `Skywork/Skywork-OR1-Math-7B` | yes |        yes         |
+| `allenai/Olmo-3-7B-Think` | yes |        yes         |
+| `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` | yes |        yes         |
+| `openai/gpt-oss-120b` | yes |         no          |
+
+`are_robust` receives these identifiers verbatim. There are no aliases to
+resolve: the `:low`-suffixed names and the closed API models that appear in the
+public sample datasets are never passed during the Competition phase, so every
+evaluated case is a local open-weights checkpoint.
+
+The warm-up phase evaluated a different set, which included
+`allenai/Olmo-3-7B-Instruct` and `google/gemma-3-27b-it`. Neither is used in the
+Competition phase, and `allenai/Olmo-3-7B-Think` is a distinct checkpoint from
+`allenai/Olmo-3-7B-Instruct`.
 
 Every `model_id` the harness passes to `are_robust` is cached, so a method can
-always load the model it is asked to judge. All four should load onto the GPUs with
-`device_map="auto"` and `local_files_only=True`. 
-If you encounter an OOM error, it may be a clash with another process on our Codabench server 
+always load the model it is asked to judge. All of them load onto the single
+visible GPU with `device_map="auto"` and `local_files_only=True`.
+If you encounter an OOM error, it may be a clash with another process on our Codabench server
 -- please try resubmitting and if the problem persists, please let us know.
 
-`openai/gpt-oss-120b` is cached as plain bfloat16 rather than in its upstream
-MXFP4 form, because MXFP4 weights cannot be materialized on these Blackwell
-cards. This is transparent to submissions:
-`from_pretrained("openai/gpt-oss-120b", local_files_only=True)` works as usual
-and yields a bf16 model of about 218 GiB across the eight GPUs.
+`openai/gpt-oss-120b` is cached in its upstream MXFP4 form, and the runtime
+image ships the Triton kernels needed to run it natively, so
+`from_pretrained("openai/gpt-oss-120b", local_files_only=True)` yields a model
+of roughly 62 GiB that fits on the single card with headroom to spare.
 
 Models outside this list cannot be loaded during evaluation. Contact the
 organizers if your method needs another model cached on the workers.

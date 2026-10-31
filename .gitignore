@@ -3,10 +3,13 @@ venv
 __pycache__/
 dist/
 .idea/
-solutions/*.zip
+solutions/
+features/
+report.tex
+references.bib
+LIT_REVIEW.md
 *.log
 *.pdf
 scratch/*
 *.zip
 predictions/*
-features/__pycache__

@@ -1,0 +1,15 @@
+{
+  "by_model": {
+    "openai/gpt-oss-120b": "error"
+  },
+  "by_family": {
+    "deepseek": "precision",
+    "skywork": "precision",
+    "olmo": "geometry",
+    "qwen": "cot_geometry",
+    "gpt-oss": "error",
+    "120b": "error"
+  },
+  "default_pipeline": "error",
+  "fallback": false
+}
