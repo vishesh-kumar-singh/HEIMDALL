@@ -13,6 +13,7 @@
   <img src="https://img.shields.io/badge/AIMO_Interpretability_Challenge-NeurIPS_2026-blueviolet?style=for-the-badge" alt="AIMO Challenge"/>
   <img src="https://img.shields.io/badge/Live_Leaderboard-12%2F14_(86%25)-success?style=for-the-badge" alt="Leaderboard"/>
   <img src="https://img.shields.io/badge/Track-Small_Models-orange?style=for-the-badge" alt="Tracks"/>
+  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="MIT License"/>
 </p>
 
 ---
@@ -201,3 +202,7 @@ Evaluation containers have networking completely disabled, with offline flags pr
 - `TOKENIZERS_PARALLELISM=false`
 
 ---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

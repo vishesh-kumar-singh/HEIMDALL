@@ -18,3 +18,4 @@ predictions/
 *.pdf
 scratch/*
 *.zip
+.agents/
