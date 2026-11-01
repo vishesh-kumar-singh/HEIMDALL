@@ -1,498 +1,203 @@
-# AIMO Interpretability Challenge
+# HEIMDALL: Seeing Through Spurious Reasoning
+### AIMO Interpretability Challenge (NeurIPS 2026)
 
-This repo contains a guideline for developing and submitting a method into the [AIMO Interpretability Challenge](https://aimo-interp.github.io/). It uses the
-**representation classifier probe** as a complete, working example.
+<p align="center">
+  <img src="image.png" alt="Heimdall - The All-Seeing Guardian" width="700" style="border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);"/>
+</p>
 
-## Contents
+<p align="center">
+  <em>"Like the all-seeing Norse watchman who guards the Bifröst bridge, <strong>Heimdall</strong> inspects the internal geometry and weight-space landscape of the model itself rather than relying on surface token generation—unveiling whether mathematical derivations stem from grounded attractor basins or fragile, memorized shortcuts."</em>
+</p>
 
-- [What your method does](#what-your-method-does)
-- [Choose a track](#choose-a-track)
-- [Prerequisites](#prerequisites)
-- [Quick start](#quick-start)
-- [Which data is available?](#which-data-is-available)
-- [Example method: trained representation probe](#example-method-trained-representation-probe)
-- [Example method: uncertainty profiling](#example-method-uncertainty-profiling)
-- [Runtime and available libraries](#runtime-and-available-libraries)
-- [Evaluation environment](#evaluation-environment)
-- [What to submit](#what-to-submit)
-- [Check the submission locally](#check-the-submission-locally)
-- [How to submit](#how-to-submit)
-- [Repository layout](#repository-layout)
+<p align="center">
+  <img src="https://img.shields.io/badge/AIMO_Interpretability_Challenge-NeurIPS_2026-blueviolet?style=for-the-badge" alt="AIMO Challenge"/>
+  <img src="https://img.shields.io/badge/Live_Leaderboard-12%2F14_(86%25)-success?style=for-the-badge" alt="Leaderboard"/>
+  <img src="https://img.shields.io/badge/Track-Small_Models-orange?style=for-the-badge" alt="Tracks"/>
+</p>
 
-## What your method does
+---
 
-For each model and batch of mathematical problems, your method predicts whether
-the model's behavior is robust:
+## Overview
 
-```python
-are_robust(model_id: str, reasoning_effort: str, problems: list[str]) -> list[bool]
+Large language models (LLMs) frequently arrive at correct final answers through brittle heuristics, surface pattern matching, or memorized shortcuts rather than sound deductive derivations. Consequently, standard accuracy benchmarks fail to certify genuine reasoning fidelity. While behavioral stress-testing requires generating millions of tokens across extensive prompt variations, **Heimdall** provides model-internal, white-box interpretability diagnostics that discern robust from spurious derivations without prompt rewriting or external judges.
+
+Developed for the **AIMO Interpretability Challenge (NeurIPS 2026)**, Heimdall operationalizes three complementary internal modalities:
+1. **Weight Space**: Testing loss landscape flatness via **Mantissa Precision Masking**.
+2. **Hidden-State Space**: Detecting premature derivation collapse via **CoT Trajectory Geometry** ($\kappa, \beta$).
+3. **Embedding Space**: Measuring continuous derivation stability via **Perturbation Trajectory Divergence**.
+
+Because internal robustness signatures prove highly architecture-dependent, Heimdall deploys two routed multi-pipeline systems:
+- **Heimdall-Bifröst**: The full tripartite bridge routing models across all three diagnostics (**12/14, 85.7%** on live leaderboard).
+- **Heimdall-Gjallarhorn**: The conservative divergence-free variant sounding the alert on fragile representations (**11/14, 78.6%** on live leaderboard).
+
+---
+
+### 1. Mantissa Precision Masking (`pipelines/precision_pipeline.py`)
+Spurious reasoning often balances on knife-edge arithmetic dependencies in parameter space, whereas genuine mathematical derivations reside in broad, flat attractor basins. 
+- **Methodology**: In-place bitwise masking zeroes the lowest mantissa bits in `torch.bfloat16` weight tensors (`param.view(torch.int16).bitwise_and_(mask).view(torch.bfloat16)`).
+- **Invariance Criterion**: We compare the model's clean derivation with its generation under precision-truncated weights. If the extracted answer flips, the derivation is diagnosed as non-robust.
+- **Empirical Threshold**: As established in our ablation study, genuine derivations remain stable under aggressive 4-bit mantissa zeroing (`~0xF`), whereas spurious reasoning derails under the mildest perturbation.
+
+### 2. Chain-of-Thought Trajectory Geometry (`pipelines/cot_geometry.py`)
+Rather than waiting for extended rollouts (thousands of tokens), the geometric progression of hidden states over compact prefixes ($L \le 128$ tokens) carries distinct structural signals.
+- **Menger Curvature ($\kappa$)**: Quantifies the extrinsic geometric turning angle between successive hidden states $h_{t-1}, h_t, h_{t+1}$. Spurious traces exhibit premature trajectory collapse and sharp erratic turns.
+- **Representation-Dispersion Slope ($\beta$)**: Measures the rate of feature-space spread over tokens. Structurally grounded deductions steadily expand across latent dimensions, while memorized shortcuts remain confined to narrow subspaces.
+- **Multi-Budget Logistic Ensembling**: Features extracted across token budgets $\mathcal{B} = \{64, 96, 128\}$ are fused through model-specific calibrated logistic classifiers.
+
+### 3. Spherical Embedding Trajectory Divergence (`pipelines/geometry_pipeline.py`)
+Tests how the model's hidden representation manifold responds to continuous infinitesimal noise in the input space.
+- **Methodology**: Applies norm-bounded spherical Gaussian perturbations directly to input token embeddings and traces layer-wise divergence against the unperturbed trajectory.
+- **Separation**: Structurally resilient derivations maintain directional coherence, whereas spurious proofs diverge rapidly away from the correct solution manifold.
+
+---
+
+## The Heimdall Architectures
+
+Heimdall routes each model family to its optimal diagnostic based on empirical representation signatures:
+
+### 1. Heimdall-Bifröst (`heimdall/bifrost`)
+The complete tripartite routing bridge:
+- **DeepSeek** (`deepseek-ai/DeepSeek-R1-0528-Qwen3-8B`) $\longrightarrow$ **Mantissa Precision Masking**
+- **Skywork** (`Skywork/Skywork-OR1-Math-7B`) $\longrightarrow$ **Mantissa Precision Masking**
+- **Olmo** (`allenai/Olmo-3-7B-Think`) $\longrightarrow$ **Perturbation Trajectory Divergence**
+- **Qwen** (`Qwen/Qwen3.5-4B`) $\longrightarrow$ **CoT Trajectory Geometry**
+- **GPT-OSS-120B** (`openai/gpt-oss-120b`) $\longrightarrow$ **Intentional Error Route** (Main Track)
+
+*Performance*: **12/14 (85.7% accuracy)** on the live competition benchmark.
+
+### 2. Heimdall-Gjallarhorn (`heimdall/gjallarhorn`)
+The conservative divergence-free variant, unifying Olmo, Skywork, and DeepSeek under weight-space precision testing:
+- **DeepSeek** $\longrightarrow$ **Mantissa Precision Masking**
+- **Skywork** $\longrightarrow$ **Mantissa Precision Masking**
+- **Olmo** $\longrightarrow$ **Mantissa Precision Masking**
+- **Qwen** $\longrightarrow$ **CoT Trajectory Geometry**
+- **GPT-OSS-120B** $\longrightarrow$ **Intentional Error Route** (Main Track)
+
+*Performance*: **11/14 (78.6% accuracy)** on the live competition benchmark.
+
+---
+
+## Repository Structure
+
+```text
+Robustness_test/
+├── heimdall/                             # Official Heimdall Submissions
+│   ├── bifrost/                          # Heimdall-Bifröst Submission
+│   │   ├── solution.py                   # Codabench callable entry point: are_robust()
+│   │   ├── aimo_router.py                # Dynamic model family router
+│   │   ├── routes.json                   # Pipeline dispatch configuration
+│   │   └── pipelines/
+│   │       ├── precision_pipeline.py     # Weight mantissa bitmasking
+│   │       ├── cot_geometry.py           # Hidden-state curvature & slope probe
+│   │       └── geometry_pipeline.py      # Embedding trajectory divergence
+│   └── gjallarhorn/                      # Heimdall-Gjallarhorn Submission
+│       ├── solution.py
+│       ├── aimo_router.py
+│       ├── routes.json
+│       └── pipelines/
+│           ├── precision_pipeline.py
+│           └── cot_geometry.py
+├── components/                           # Official competition ingestion & scoring harness
+│   ├── ingestion_program/
+│   └── scoring_program/
+├── scripts/                              # Build, test, and dataset utilities
+│   ├── build.py                          # Submissions packager for Codabench
+│   ├── run_local.py                      # Local offline evaluation harness
+│   └── import_hf_dataset.py              # HF dataset sync script
+├── Dockerfile.competition                # Competition evaluation runtime environment
+├── image.png                             # Heimdall artwork
+└── pyproject.toml                        # Environment configuration
 ```
 
-Your submission must expose a callable named `are_robust` with these arguments.
-The annotations are recommended for clarity but are not required at runtime.
-The reasoning effort comes from the dataset and is `"default"`, `"low"`, or
-`"medium"`. If the field is absent, your method receives `"default"`.
+---
 
-The legacy `are_robust(model_id, problems)` interface remains fully supported;
-existing submissions require no changes and ignore reasoning-effort metadata.
+## Quick Start & Usage
 
-The returned list must:
-
-- contain exactly one prediction per input problem;
-- preserve the input order;
-- contain real Python `bool` values, not integers or NumPy boolean scalars;
-- use `True` for robust and `False` for not robust.
-
-Your method can load the specified language model (`model_id`) through Hugging
-Face, run inference on the supplied `problems`, and predict whether the model is
-robust on each problem. You may use or extend any available Hugging Face
-functionality and combine signals from the forward pass to produce the
-robustness predictions.
-
-Model weights for every evaluated `model_id` are available through the
-evaluation worker's offline Hugging Face cache; see
-[Evaluation environment](#evaluation-environment) for the list. As the evaluation runs offline, you will not have
-access to other HF models.
-
-## Choose a track
-
-The competition has a **Main Track** and a **Small Model Track**. Select exactly
-one task when uploading each submission.
-
-- A main-track ZIP must not contain `small.txt`.
-- A small-model-track ZIP must contain `small.txt` at its root.
-- The marker name is case-insensitive and its contents are ignored. A missing or
-  unexpected marker fails the submission before `solution.py` is imported.
-
-Both tracks report `accuracy`, `coverage`, and `invalid_predictions`.
-Codabench keeps the scores separate by task while reusing the shared leaderboard
-columns. Completed submissions are added to the leaderboard automatically, so
-several entries from the same participant may appear.
-
-## Prerequisites
-
-You need:
-
-- Python 3.11+ and [`uv`](https://docs.astral.sh/uv/) for the local tooling;
-- `git` to clone the repository;
-- Docker, if you want to reproduce the offline evaluation container locally
-  (recommended before submitting).
-
-Clone the repository and install dependencies:
-
+### 1. Installation & Environment
+Ensure you have Python 3.11+ and [`uv`](https://docs.astral.sh/uv/) installed:
 ```bash
-git clone git@github.com:aimo-interp/getting-started.git
-cd getting-started
+git clone https://github.com/vishesh-kumar-singh/HEIMDALL.git
+cd HEIMDALL
 uv sync
 ```
 
-## Quick start
-
-The fastest path from a fresh clone to a scored local run:
-
-```bash
-# 1. Import the public validation sample into data/val-sample/.
-uv run scripts/import_hf_dataset.py
-
-# 2. Score the example method on that sample.
-uv run scripts/run_local.py solutions/trained-probe \
-  --input-dir data/val-sample/input \
-  --reference-dir data/val-sample/reference
-```
-
-Without a trained probe artifact, the example predicts `False` for every case
-(a valid but trivial baseline). The rest of this guide explains how to plug in a
-real artifact, package a submission, and validate it. To write your own method,
-copy `solutions/trained-probe/` and replace the implementation behind
-`are_robust`.
-
-## Which data is available?
-
-### Public development data
-
-The public validation sample is
-[`aimo-interp/val-sample`](https://huggingface.co/datasets/aimo-interp/val-sample).
-It contains examples with:
-
-- `model_id`: the model whose robustness is being evaluated;
-- `original_problem`: the mathematical problem text;
-- `permutation_type`: the relevant perturbation categories;
-- `model_is_robust`: the public development label.
-
-Import it into this repository with:
+### 2. Building Submission Bundles
+Submissions are packaged into deterministic, independently uploadable Codabench ZIP files via `scripts/build.py`:
 
 ```bash
-uv run scripts/import_hf_dataset.py
+# Build Main Track submissions
+python3 scripts/build.py solutions
+
+# Build Small Models Track submissions (automatically injects small.txt)
+python3 scripts/build.py solutions --small
 ```
 
-This creates:
+Packaged artifacts will appear in `dist/`:
+- `dist/solution-heimdall-bifrost.zip` (Main Track)
+- `dist/solution-heimdall-bifrost-small.zip` (Small Models Track)
+- `dist/solution-heimdall-gjallarhorn.zip` (Main Track)
+- `dist/solution-heimdall-gjallarhorn-small.zip` (Small Models Track)
 
-```text
-data/val-sample/
-├── input/
-│   └── cases.jsonl
-├── reference/
-│   └── labels.jsonl
-└── metadata.json
-```
-
-The public labels are for development only. The final evaluation uses separate
-private problems and labels.
-
-### Data available during evaluation
-
-For each call, your method receives a `model_id`, a `reasoning_effort`, and a
-list of problem strings. Problems are grouped by model and reasoning effort,
-with one call per group. Legacy submissions still receive one batch per model.
-
-Your submission does not receive case IDs, reference labels, private dataset
-files, or network access.
-
-## Example method: trained representation probe
-
-This baseline demonstrates how to compose a solution.
-
-Start with this directory:
-
-```text
-trained-probe/
-├── solution.py
-├── probe_inference.py
-└── probe_artifacts/
-    └── probe_artifact.pkl
-```
-
-The `solution.py` file defines only the Codabench interface:
-
-```python
-from probe_inference import predict_robustness
-
-def are_robust(model_id: str, reasoning_effort: str, problems: list[str]) -> list[bool]:
-    return predict_robustness(model_id, problems)
-```
-
-The example baselines accept `reasoning_effort` but do not use it in their
-predictions. Your method can use it to account for the evaluated configuration.
-
-`probe_inference.py` contains the implementation in three sections:
-
-1. **Artifact loading:** find and validate `probe_artifact.pkl`.
-2. **Hidden-state extraction:** load the offline model, format the problem,
-   perform a forward pass, and select the final prompt-token representation
-   from the model layer.
-3. **Probe scoring:** apply a collection of linear probes and average their
-   margins.
-
-For one probe, the decision is:
-
-```python
-margin = weights @ hidden_state + bias - threshold
-prediction = margin >= 0
-```
-
-The ensemble averages these margins and returns `True` when the mean is
-non-negative. The artifact stores weights, biases, thresholds, the selected
-layer, the Hugging Face model ID, and the system prompt. It does not contain
-precomputed hidden states.
-
-## Example method: uncertainty profiling
-
-The repository also provides `solutions/uncertainty-profiling/`. This baseline
-generates a deterministic response to each original problem and summarizes the
-generated-token distributions with 14 confidence and uncertainty statistics.
-A pretrained scikit-learn regressor maps those features to predicted absolute
-accuracy decay; the artifact's cross-validated threshold converts the score to
-the required robustness boolean.
-
-The motivation is to measure robustness through uncertainty over the model's
-generated reasoning trace: robust and spurious reasoning may produce different
-token-level uncertainty signatures. This follows the general perspective of
-[Tracing Uncertainty in Language Model "Reasoning"](https://arxiv.org/abs/2605.07776),
-while using a simpler set of 14 aggregate trace features.
-
-Training is deliberately separate from submission inference. Generate a
-resumable feature cache from the pinned public aggregate dataset:
+### 3. Running Local Offline Evaluation
+Evaluate any built ZIP archive locally using the competition evaluation container:
 
 ```bash
-uv run solutions/uncertainty-profiling/scripts/compute_uncertainty_features.py \
-  --cache-dir /path/to/huggingface/cache
+# Test Heimdall-Bifröst on Small Models Track with multi-GPU parallelization
+CUDA_VISIBLE_DEVICES=0,1 uv run scripts/run_local.py dist/solution-heimdall-bifrost-small.zip \
+  --small \
+  --input-dir data/train-sample/input \
+  --reference-dir data/train-sample/reference
 ```
 
-Then select the regressor and threshold with grouped cross-validation, refit on
-all feature rows, and export the joblib artifact directly into the solution:
+---
+
+## Execution Mechanics & Rules Compliance
+
+- **Zero Ground Truth Required**: Completely unsupervised and reference-free at test time.
+- **Zero Prompt Paraphrasing**: Operates directly on the unperturbed problem string, avoiding semantic drift and LLM judge latency.
+- **Dynamic Multi-GPU Support**: The parallel execution engine automatically discovers available GPUs through `CUDA_VISIBLE_DEVICES` (supports 1, 2, or more GPUs seamlessly).
+- **Strict Offline Mode**: Complies fully with competition air-gapping (`HF_HUB_OFFLINE=1`, `local_files_only=True`).
+- **Deterministic & Bounded**: All generations run under greedy decoding (`do_sample=False`) with strict response caps.
+
+---
+
+## Evaluation Environment & Docker Reproduction
+
+Submissions are evaluated in an offline container running on an NVIDIA RTX PRO 6000 (Blackwell architecture, `sm_120`) with 96 GB of VRAM. The exact evaluation container environment is pinned in [`Dockerfile.competition`](Dockerfile.competition).
+
+### Pinned Runtime Dependencies
+- **Base Image**: `pytorch/pytorch:2.12.1-cuda13.2-cudnn9-runtime` (pinned via manifest digest)
+- **PyTorch**: `2.12.1` with CUDA `13.2`
+- **Transformers**: `5.13.0`
+- **Accelerate**: `1.13.0`
+- **Tokenizers**: `0.22.2`
+- **Scikit-Learn**: `1.8.0`
+- **Hugging Face Hub**: `1.22.0`
+- **Joblib**: `1.5.3`
+- **Pandas**: `3.0.3`
+
+### Building and Running via Docker
+To reproduce the exact evaluation container locally:
 
 ```bash
-uv run solutions/uncertainty-profiling/scripts/train_uncertainty_regressor.py \
-  --feature-data-path \
-  data/uncertainty-profiling/deepseek-ai_DeepSeek-R1-0528-Qwen3-8B_confidence_features.parquet
+# 1. Build the competition container image
+docker build -t aimo-competition -f Dockerfile.competition .
+
+# 2. Score a built submission inside the container
+docker run --gpus all --rm \
+  -v $(pwd)/data:/app/data \
+  -v $(pwd)/dist:/app/dist \
+  aimo-competition \
+  python3 scripts/run_local.py /app/dist/solution-heimdall-bifrost-small.zip \
+    --small \
+    --input-dir /app/data/train-sample/input \
+    --reference-dir /app/data/train-sample/reference
 ```
 
-The resulting solution is offline and self-contained. During evaluation it
-resolves the Codabench alias `qwen3-8b:low` to the cached
-`deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` checkpoint, then loads the matching
-bundled regressor artifact. It uses greedy decoding with a 2,048-token prompt
-cap and a 4,096-token response cap. See
-`solutions/uncertainty-profiling/README.md` for the complete feature list,
-artifact provenance, and CV search.
+Evaluation containers have networking completely disabled, with offline flags preset:
+- `HF_HUB_OFFLINE=1`
+- `TRANSFORMERS_OFFLINE=1`
+- `HF_HOME=/app/data/huggingface`
+- `TOKENIZERS_PARALLELISM=false`
 
-## Runtime and available libraries
-
-The evaluation container is offline. It does not run `pip install`, `uv sync`,
-or a submitted `requirements.txt`.
-
-**You may rely only on the Python standard library and packages provided by
-[`Dockerfile.competition`](Dockerfile.competition).** The current runtime
-provides:
-
-- PyTorch `2.12.1` with CUDA `13.2`;
-- Accelerate `1.13.0`;
-- Hugging Face Hub `1.22.0`;
-- joblib `1.5.3`;
-- pandas `3.0.3`;
-- safetensors `0.8.0`;
-- scikit-learn `1.8.0`;
-- tokenizers `0.22.2`;
-- Transformers `5.13.0`.
-
-Important consequences:
-
-- A package installed only on your laptop or cluster login environment will not
-  exist during evaluation.
-- Adding `requirements.txt` to the ZIP does not install anything.
-- Artifacts serialized with scikit-learn or joblib should be trained with the
-  runtime versions above.
-- Model and tokenizer loading must work offline, so rely only on the model ID
-  passed to `are_robust`. Do not call external APIs or download from Hugging
-  Face during evaluation.
-- You may include your own Python source files and pretrained data artifacts in
-  the ZIP, such as pretrained probes, provided they comply with the competition
-  rules.
-
-## Evaluation environment
-
-Each submission is evaluated on a dedicated GPU worker with the following
-resources:
-
-- **GPU:** one NVIDIA RTX PRO 6000 (Blackwell, compute capability 12.0) with
-  96 GB of VRAM. A single card is exposed to the evaluation container, so
-  `torch.cuda.device_count()` returns 1 and `device_map="auto"` places the whole
-  model on that card. Every evaluated checkpoint fits, `openai/gpt-oss-120b`
-  included. The submissions share the compute environment, so the free VRAM at
-  any moment may be less than the nominal total.
-- **CPU and RAM:** 192 cores with ample system memory; there is no per-container
-  memory cap.
-- **Time limit:** 3600 seconds per evaluation run, applied separately to the
-  prediction run and the scoring run. The limit covers the *entire* prediction
-  run -- every model batch and every problem together, not one hour per problem.
-  Loading a cached 4-8B checkpoint takes about two seconds from the warm cache,
-  and `openai/gpt-oss-120b` about four.
-- **Network:** disabled inside evaluation containers. `HF_HUB_OFFLINE=1` and
-  `TRANSFORMERS_OFFLINE=1` are preset.
-- **Model cache:** a read-only Hugging Face cache is mounted at
-  `/app/data/huggingface`, and `HF_HOME` already points to it, so
-  `from_pretrained(...)` resolves cached models with no extra configuration.
-  Pass `local_files_only=True` to fail fast on anything not cached.
-
-Models evaluated in the Competition phase, and cached on the workers:
-
-| `model_id` | Main Track | Small Models Track |
-| --- | :---: |:------------------:|
-| `Qwen/Qwen3.5-4B` | yes |        yes         |
-| `Skywork/Skywork-OR1-Math-7B` | yes |        yes         |
-| `allenai/Olmo-3-7B-Think` | yes |        yes         |
-| `deepseek-ai/DeepSeek-R1-0528-Qwen3-8B` | yes |        yes         |
-| `openai/gpt-oss-120b` | yes |         no          |
-
-`are_robust` receives these identifiers verbatim. There are no aliases to
-resolve: the `:low`-suffixed names and the closed API models that appear in the
-public sample datasets are never passed during the Competition phase, so every
-evaluated case is a local open-weights checkpoint.
-
-The warm-up phase evaluated a different set, which included
-`allenai/Olmo-3-7B-Instruct` and `google/gemma-3-27b-it`. Neither is used in the
-Competition phase, and `allenai/Olmo-3-7B-Think` is a distinct checkpoint from
-`allenai/Olmo-3-7B-Instruct`.
-
-Every `model_id` the harness passes to `are_robust` is cached, so a method can
-always load the model it is asked to judge. All of them load onto the single
-visible GPU with `device_map="auto"` and `local_files_only=True`.
-If you encounter an OOM error, it may be a clash with another process on our Codabench server
--- please try resubmitting and if the problem persists, please let us know.
-
-`openai/gpt-oss-120b` is cached in its upstream MXFP4 form, and the runtime
-image ships the Triton kernels needed to run it natively, so
-`from_pretrained("openai/gpt-oss-120b", local_files_only=True)` yields a model
-of roughly 62 GiB that fits on the single card with headroom to spare.
-
-Models outside this list cannot be loaded during evaluation. Contact the
-organizers if your method needs another model cached on the workers.
-
-## What to submit
-
-Submit one ZIP archive containing:
-
-- `solution.py` at the archive root;
-- a root-level `small.txt` only when submitting to the Small Model Track (its
-  contents are ignored);
-- any helper modules or Python packages imported by `solution.py`;
-- all pretrained artifacts needed, such as the trained probes;
-- optional configuration files.
-
-Do not submit:
-
-- training datasets or private labels;
-- model weights already supplied by the evaluation worker;
-- virtual environments, caches, `__pycache__`, or installed packages;
-- credentials, API keys, or code that requires network access.
-
-Correct ZIP layout, for the probing example:
-
-```text
-baseline-submission-bundle.zip
-├── solution.py
-├── probe_inference.py
-└── probe_artifacts/
-    └── probe_artifact.pkl
-```
-
-Correct Small Model Track layout:
-
-```text
-baseline-submission-bundle-small.zip
-├── solution.py
-├── small.txt
-├── probe_inference.py
-└── probe_artifacts/
-    └── probe_artifact.pkl
-```
-
-Incorrect ZIP layout:
-
-```text
-baseline-submission-bundle.zip
-└── trained-probe/
-    └── solution.py
-```
-
-Build the archive from inside the method directory:
-
-```bash
-cd trained-probe
-zip -r ../baseline-submission-bundle.zip solution.py probe_inference.py probe_artifacts
-cd ..
-```
-
-Verify that `solution.py` is at the root:
-
-```bash
-unzip -l baseline-submission-bundle.zip
-```
-
-For any method under `solutions/`, the build helper can also create both track
-variants without modifying the source directory:
-
-```bash
-uv run scripts/build.py solutions
-uv run scripts/build.py solutions --small
-```
-
-This creates a solution ZIP. For the probing example, the main-track output is
-`dist/solution-trained-probe.zip` and the small-track output is
-`dist/solution-trained-probe-small.zip`.
-
-## Check the submission locally
-
-The repository already includes the method under `solutions/trained-probe/`.
-Copy the exported artifact into it:
-
-```text
-solutions/
-└── trained-probe/
-    ├── solution.py
-    ├── probe_inference.py
-    └── probe_artifacts/
-        └── probe_artifact.pkl
-```
-
-```bash
-mkdir -p solutions/trained-probe/probe_artifacts
-cp /path/to/probe_artifact.pkl \
-  solutions/trained-probe/probe_artifacts/probe_artifact.pkl
-```
-
-Run the public validation sample:
-
-```bash
-uv run scripts/run_local.py solutions/trained-probe \
-  --input-dir data/val-sample/input \
-  --reference-dir data/val-sample/reference
-```
-
-Expected output has this shape:
-
-```json
-{
-  "accuracy": 0.7,
-  "coverage": 1.0,
-  "invalid_predictions": 0
-}
-```
-
-The accuracy shown above is only an example. Before submission, require:
-
-- `coverage` equal to `1.0`;
-- `invalid_predictions` equal to `0`;
-- deterministic predictions across repeated runs;
-- successful execution in the competition Docker image, not only in a local
-  virtual environment.
-
-To check each track's packaging guards and local scores, run:
-
-```bash
-uv run scripts/build.py solutions
-uv run scripts/build.py solutions --small
-uv run scripts/run_local.py dist/solution-always-true.zip
-uv run scripts/run_local.py dist/solution-always-true-small.zip --small
-```
-
-The small-track run uses the same score names as the main track:
-
-```json
-{
-  "accuracy": 0.375,
-  "coverage": 1.0,
-  "invalid_predictions": 0
-}
-```
-
-The public sample is a contract and packaging check; it is not a preview of the
-private track scores.
-
-## How to submit
-
-1. Sign in to the AIMO Interpretability Challenge on [Codabench](https://www.codabench.org/competitions/16180/#/pages-tab).
-2. Open the active submission phase and select exactly one task.
-3. For the Main Track, upload a ZIP without `small.txt`, such as
-   `dist/solution-trained-probe.zip`.
-4. For the Small Model Track, upload the corresponding ZIP with the marker,
-   such as `dist/solution-trained-probe-small.zip`.
-5. Wait for ingestion and scoring to finish.
-6. Check the track's coverage and invalid-prediction columns before interpreting
-   its accuracy.
-
-An invalid prediction usually means the method raised an exception, returned a
-non-boolean value, or returned the wrong number of predictions. Detailed
-participant exceptions may be hidden by the evaluator, so reproduce failures
-locally with the same Docker image.
-
-
-### Repository layout
-
-```text
-components/             the Codabench ingestion and scoring programs, used by run_local.py
-data/val-sample/        generated public validation import (ignored)
-scripts/                dataset importer, local runner, and archive builder
-solutions/              example methods, including the trained probe
-Dockerfile.competition  the evaluation runtime (exact package versions)
-pyproject.toml          local dependencies mirroring the runtime versions
-```
+---
