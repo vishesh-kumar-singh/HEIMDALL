@@ -75,6 +75,12 @@ def norm(answer: str | None) -> str:
             a = a[len(l) : -len(r)].strip()
     return a or "__EMPTY__"
 
+def get_model_mask(model_id: str) -> int:
+    m = model_id.lower()
+    if "skywork" in m:
+        return ~0x7  # 3-bit mask (~0x0007)
+    return ~0xF      # 4-bit mask (~0x000F) default
+
 def mask_precision(model, mask=~0xF):
     with torch.no_grad():
         for name, param in model.named_parameters():
@@ -166,8 +172,10 @@ def predict_robustness(
         batch = problems[i:i+BATCH_SIZE]
         clean_answers.extend(process_batch(model, tokenizer, batch, "CLEAN"))
         
-    print(f"[precision] Dropping precision (~0xF mask)...", file=sys.stderr, flush=True)
-    mask_precision(model, mask=~0xF)
+    model_mask = get_model_mask(hf_id)
+    mask_str = "3-bit (~0x7)" if model_mask == ~0x7 else "4-bit (~0xF)"
+    print(f"[precision] Dropping precision ({mask_str} mask for {hf_id})...", file=sys.stderr, flush=True)
+    mask_precision(model, mask=model_mask)
     
     noisy_answers = []
     print(f"[precision] Running noisy batched generation on {len(problems)} problems...", file=sys.stderr, flush=True)
@@ -218,7 +226,10 @@ def worker_rollout(gpu_id: str, model_id: str, problems: list[str], is_masked: b
     model.eval()
 
     if is_masked:
-        mask_precision(model, mask=~0xF)
+        model_mask = get_model_mask(hf_id)
+        mask_str = "3-bit (~0x7)" if model_mask == ~0x7 else "4-bit (~0xF)"
+        print(f"[precision] [{tag}] Dropping precision ({mask_str} mask for {hf_id})...", file=sys.stderr, flush=True)
+        mask_precision(model, mask=model_mask)
 
     answers = []
     print(f"[precision] [{tag}] Running generation on {len(problems)} problems...", file=sys.stderr, flush=True)
