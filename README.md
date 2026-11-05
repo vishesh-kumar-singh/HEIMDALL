@@ -105,6 +105,8 @@ Robustness_test/
 │   ├── build.py                          # Submissions packager for Codabench
 │   ├── run_local.py                      # Local offline evaluation harness
 │   └── import_hf_dataset.py              # HF dataset sync script
+│   ├── cot_geometry_calibration.py        # CoT feature extraction and probe fitting
+│   └── extract_norm_divergence.py         # Embedding-perturbation feature collection
 ├── Dockerfile.competition                # Competition evaluation runtime environment
 ├── image.png                             # Heimdall artwork
 └── pyproject.toml                        # Environment configuration
@@ -121,6 +123,32 @@ git clone https://github.com/vishesh-kumar-singh/HEIMDALL.git
 cd HEIMDALL
 uv sync
 ```
+
+### Reproducing CoT and divergence calibration data
+
+The calibration utilities take a dataset directory, so `train-sample` resolves to
+`data/train-sample`. They read `input/cases.jsonl` and, when present,
+`reference/labels.jsonl`. The defaults save generated artifacts next to that dataset.
+
+```bash
+# One greedy 128-token rollout per case; writes data/train-sample/cot_geometry_features.jsonl
+uv run python scripts/cot_geometry_calibration.py extract --dataset train-sample
+
+# Fits the model-wise mean-of-sigmoids probe in the report appendix.
+uv run python scripts/cot_geometry_calibration.py fit \
+  --features data/train-sample/cot_geometry_features.jsonl \
+  --output data/train-sample/cot_geometry_weights.json
+
+# Runs the 1 clean + 10 perturbed 512-token trajectories and writes all five
+# normalized divergence milestones to data/train-sample/norm_divergence_features.csv.
+uv run python scripts/extract_norm_divergence.py --dataset train-sample
+```
+
+`cot_geometry_calibration.py fit` records every regularization candidate and the
+selected one in its JSON output. Its defaults match the appendix: 64/96/128-token
+prefixes, 10 Nelder--Mead starts, 30,000 simplex iterations, and L-BFGS-B polishing.
+Use `--select balanced-accuracy` when selecting the regularization setting by local
+balanced accuracy rather than the regularized training objective.
 
 ### 2. Building Submission Bundles
 Submissions are packaged into deterministic, independently uploadable Codabench ZIP files via `scripts/build.py`:

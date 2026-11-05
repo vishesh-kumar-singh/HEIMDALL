@@ -4,7 +4,7 @@ Routes models to their designated diagnostic pipeline:
 - DeepSeek          -> precision (Mantissa precision masking pipeline)
 - Skywork           -> precision (Mantissa precision masking pipeline)
 - Olmo              -> precision (Mantissa precision masking pipeline)
-- Qwen              -> cot_geometry (Kushagra's CoT geometry probe)
+- Qwen              -> cot_geometry (CoT geometry probe)
 - openai/gpt-oss-120b -> error (Intentional error route for invalid predictions)
 
 Deterministic execution, full problem evaluation without artificial timeouts.
